@@ -11,7 +11,7 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Blood Donation App'),
       ),
-      backgroundColor: Color.fromARGB(255, 21, 54, 154),
+      backgroundColor: Color.fromARGB(255, 30, 73, 202),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -22,21 +22,21 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: Image.asset(
-                    'assets/images/azadi.jpeg',
+                    'assets/images/azadia.jpeg',
                     height: 50,
                     width: 50,
                   ),
                 ),
                 Expanded(
                   child: Image.asset(
-                    'assets/images/loginLogo.jpeg',
+                    'assets/images/loginLogoa.jpeg',
                     height: 70,
                     width: 70,
                   ),
                 ),
                 Expanded(
                   child: Image.asset(
-                    'assets/images/g20.jpeg',
+                    'assets/images/g20a.jpeg',
                     height: 50,
                     width: 50,
                   ),
