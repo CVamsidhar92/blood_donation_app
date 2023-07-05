@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
                 ),
                 Expanded(
                   child: Image.asset(
-                    'assets/images/loginLogoa.jpeg',
+                    'assets/images/loginLogo.png',
                     height: 70,
                     width: 70,
                   ),
