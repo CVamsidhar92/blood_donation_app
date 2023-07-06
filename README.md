@@ -1,16 +1,21 @@
 # blood_donation
 
-A new Flutter project.
+Usefull Comands:-
 
-## Getting Started
+//To clean the gradle
+flutter clean
 
-This project is a starting point for a Flutter application.
+//To Start the project
+flutter run
 
-A few resources to get you started if this is your first Flutter project:
+// To Enable the web
+flutter config --enable-web
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+//To run the app in chrome
+flutter run -d chrome
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+//To Build the App in web
+flutter build web
+
+//To build the apk
+flutter build apk
