@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'base_url.dart';
 
 class NextPage extends StatefulWidget {
   const NextPage({Key? key}) : super(key: key);
@@ -62,7 +63,7 @@ class _NextPageState extends State<NextPage> {
 
   Future<void> fetchCities() async {
     final res = await http.post(
-      Uri.parse("https://bzadevops.co.in/BloodDonationApp/api/getCityName"),
+      Uri.parse(base_url + 'getCityName'),
       // You can pass any necessary headers or request body here
     );
     if (res.statusCode == 200) {
@@ -106,8 +107,7 @@ class _NextPageState extends State<NextPage> {
     String jsonData = jsonEncode(formData);
 
     // Make a POST request to the API endpoint
-    Uri url =
-        Uri.parse('https://bzadevops.co.in/BloodDonationApp/api/register');
+    Uri url = Uri.parse(base_url + 'register');
     http.post(url,
         body: jsonData,
         headers: {'Content-Type': 'application/json'}).then((response) {
@@ -317,14 +317,16 @@ class _NextPageState extends State<NextPage> {
                             textFieldConfiguration: TextFieldConfiguration(
                               decoration: InputDecoration(
                                 labelText: 'Select a City',
-                                suffixIcon: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      officeCity = '';
-                                    });
-                                  },
-                                  child: Icon(Icons.close),
-                                ),
+                                suffixIcon: officeCity.isNotEmpty
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            officeCity = '';
+                                          });
+                                        },
+                                        child: Icon(Icons.close),
+                                      )
+                                    : null, // Set suffixIcon to null if officeCity is empty
                               ),
                               controller:
                                   TextEditingController(text: officeCity),
@@ -501,14 +503,16 @@ class _NextPageState extends State<NextPage> {
                             textFieldConfiguration: TextFieldConfiguration(
                               decoration: InputDecoration(
                                 labelText: 'Select a City',
-                                suffixIcon: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      city1 = '';
-                                    });
-                                  },
-                                  child: Icon(Icons.close),
-                                ),
+                                suffixIcon: city1.isNotEmpty
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            city1 = '';
+                                          });
+                                        },
+                                        child: Icon(Icons.close),
+                                      )
+                                    : null, // Set suffixIcon to null if city1 is empty
                               ),
                               controller: TextEditingController(text: city1),
                             ),
@@ -549,6 +553,7 @@ class _NextPageState extends State<NextPage> {
                           ),
                         ),
                       ),
+
                       Row(
                         children: [
                           Expanded(

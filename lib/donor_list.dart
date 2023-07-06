@@ -1,10 +1,10 @@
-// ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:share/share.dart';
+import 'base_url.dart';
 
 class DonorListScreen extends StatefulWidget {
   final String? bloodGroup;
@@ -39,7 +39,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
   }
 
   Future<List<Map<String, dynamic>>> fetchData() async {
-    final url = 'https://bzadevops.co.in/BloodDonationApp/api/donor_list1';
+    final url = base_url +'donor_list1';
     final body = {
       'bloodGroup': widget.bloodGroup ?? '',
       'state': widget.state ?? '',
