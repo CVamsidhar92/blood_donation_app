@@ -283,7 +283,7 @@ class _NextPageState extends State<NextPage> {
                             child: TextField(
                               onChanged: (value) {
                                 setState(() {
-                                  officeArea = value;
+                                  officeStreet = value;
                                 });
                               },
                               decoration: const InputDecoration(
@@ -297,7 +297,7 @@ class _NextPageState extends State<NextPage> {
                             child: TextField(
                               onChanged: (value) {
                                 setState(() {
-                                  officeStreet = value;
+                                  officeArea = value;
                                 });
                               },
                               decoration: const InputDecoration(
@@ -469,7 +469,7 @@ class _NextPageState extends State<NextPage> {
                             child: TextField(
                               onChanged: (value) {
                                 setState(() {
-                                  area1 = value;
+                                  street1 = value;
                                 });
                               },
                               decoration: const InputDecoration(
@@ -483,7 +483,7 @@ class _NextPageState extends State<NextPage> {
                             child: TextField(
                               onChanged: (value) {
                                 setState(() {
-                                  street1 = value;
+                                  area1 = value;
                                 });
                               },
                               decoration: const InputDecoration(

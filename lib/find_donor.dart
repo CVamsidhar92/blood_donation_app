@@ -17,7 +17,22 @@ class _FindDonorState extends State<FindDonor> {
   String? selectedCity;
 
   List<String> bloodGroups = [
-    'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'A1+', 'A1-', 'A2+', 'A2-', 'A1B+', 'A1B-', 'A2B+', 'A2B-'
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
+    'A1+',
+    'A1-',
+    'A2+',
+    'A2-',
+    'A1B+',
+    'A1B-',
+    'A2B+',
+    'A2B-'
   ];
 
   List<dynamic> data = [];
@@ -41,7 +56,8 @@ class _FindDonorState extends State<FindDonor> {
       if (fetchedData is List) {
         setState(() {
           data.addAll(fetchedData);
-          states = data.map((item) => item['state'].toString()).toSet().toList();
+          states =
+              data.map((item) => item['state'].toString()).toSet().toList();
           selectedState = states.isNotEmpty ? states[0] : null;
           updateDistrictsAndCities();
         });
@@ -53,19 +69,26 @@ class _FindDonorState extends State<FindDonor> {
   }
 
   void updateDistrictsAndCities() {
-    final filteredData = data.where((item) => item['state'].toString() == selectedState!).toList();
-    districts = filteredData.map((item) => item['district'].toString()).toSet().toList();
+    final filteredData = data
+        .where((item) => item['state'].toString() == selectedState!)
+        .toList();
+    districts = filteredData
+        .map((item) => item['district'].toString())
+        .toSet()
+        .toList();
     selectedDistrict = districts.isNotEmpty ? districts[0] : null;
     updateCities();
   }
 
   void updateCities() {
     if (selectedState != null && selectedDistrict != null) {
-      final filteredData = data.where(
-        (item) =>
-            item['state'].toString() == selectedState! &&
-            item['district'].toString() == selectedDistrict!,
-      ).toList();
+      final filteredData = data
+          .where(
+            (item) =>
+                item['state'].toString() == selectedState! &&
+                item['district'].toString() == selectedDistrict!,
+          )
+          .toList();
       cities = filteredData.map((item) => item['city'].toString()).toList();
       selectedCity = cities.isNotEmpty ? cities[0] : null;
     } else {
@@ -171,10 +194,6 @@ class _FindDonorState extends State<FindDonor> {
                     content: DropdownButtonFormField<String>(
                       value: selectedState,
                       items: [
-                        DropdownMenuItem<String>(
-                          value: null,
-                          child: Text('All'),
-                        ),
                         ...states.map((String state) {
                           return DropdownMenuItem<String>(
                             value: state,
@@ -194,10 +213,11 @@ class _FindDonorState extends State<FindDonor> {
                     title: const Text('Select District'),
                     isActive: currentStep == 2,
                     content: DropdownButtonFormField<String>(
-                      value: selectedDistrict,
+                      value: selectedDistrict ??
+                          'All', // Set initial value to 'All' if selectedDistrict is null
                       items: [
                         DropdownMenuItem<String>(
-                          value: null,
+                          value: 'All',
                           child: Text('All'),
                         ),
                         ...districts.map((String district) {

@@ -108,15 +108,24 @@ class _DonorListScreenState extends State<DonorListScreen> {
 
   String buildCardDetails(Map<String, dynamic> item) {
     final itemName = item['name'] as String?;
+    final itemBloodGroup = item['blood_group'] as String?;
     final itemMobileNo = item['mobile_no'] as String?;
     final itemDesig = item['desig'] as String?;
-    final itemOfficeCity = item['office_city'] as String?;
+    final itemOffAddress1 = item['office_street'] as String?;
+    final itemOffAddress2 = item['office_area'] as String?;
+    final itemOffCity = item['office_city'] as String?;
+    final itemResAddress1 = item['residential_street'] as String?;
+    final itemResAddress2 = item['residential_area'] as String?;
+    final itemResCity = item['residential_city'] as String?;
+
 
     final cardDetails = '''
-    Name: $itemName
-    Mobile No: $itemMobileNo
-    Designation: $itemDesig
-    Office City: $itemOfficeCity
+    Name:- $itemName    
+    Blood Group:- $itemBloodGroup
+    Mobile No:- $itemMobileNo
+    Designation:- $itemDesig
+    Office Address:- $itemOffAddress1 , $itemOffAddress2 , $itemOffCity
+    Residential Address:- $itemResAddress1 , $itemResAddress2 , $itemResCity
   ''';
 
     return cardDetails;
