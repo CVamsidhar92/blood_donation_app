@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'base_url.dart';
 
 class NextPage extends StatefulWidget {
   const NextPage({Key? key}) : super(key: key);
@@ -13,7 +12,8 @@ class NextPage extends StatefulWidget {
 }
 
 class _NextPageState extends State<NextPage> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   String name = '';
   String selectedBloodGroup = '';
   String designation = '';
@@ -21,19 +21,21 @@ class _NextPageState extends State<NextPage> {
   String officeStreet = '';
   String officeCity = '';
   String officePincode = '';
-  String? officeDistrict = '';
-  String? officeState = '';
+  String officeDistrict = '';
+  String officeState = '';
   String officeCountry = 'India';
   String area1 = '';
   String street1 = '';
   String city1 = '';
   String pincode1 = '';
-  String? district1 = '';
-  String? state1 = '';
+  String district1 = '';
+  String state1 = '';
   String mobileNumber = '';
   String country1 = 'India';
-
-  bool isDistrictEnabled = false;
+  var officeLatitude = 0.0;
+  var officeLongitude = 0.0;
+  var residentialLatitude = 0.0;
+  var residentialLongitude = 0.0;
 
   List<String> bloodGroups = [
     'A+',
@@ -53,34 +55,95 @@ class _NextPageState extends State<NextPage> {
     'A2B+',
     'A2B-'
   ];
-  List<dynamic> data = [];
+  TextEditingController officeLatitudeController = TextEditingController();
+  TextEditingController officeLongitudeController = TextEditingController();
+  TextEditingController residentialLatitudeController = TextEditingController();
+  TextEditingController residentialLongitudeController =
+      TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    fetchCities(); // Fetch cities and populate the list
-  }
+  // Function to fetch latitude and longitude from address
+  Future<Map<String, double>> getLatLngFromAddress(
+      String street, String area, String city, String state) async {
+    final apiKey =
+        'AIzaSyAC2MG5XPZdHjahoQCi8mZawbB3VHbrfC0'; // Replace with your API key
+    final fullAddress = '$street, $area, $city, $state';
+    final encodedAddress = Uri.encodeFull(fullAddress);
+    final url =
+        'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey';
 
-  Future<void> fetchCities() async {
-    final res = await http.post(
-      Uri.parse(base_url + 'getCityName'),
-      // You can pass any necessary headers or request body here
-    );
-    if (res.statusCode == 200) {
-      final fetchedData = jsonDecode(res.body);
-      if (fetchedData is List) {
-        setState(() {
-          data.addAll(fetchedData);
-        });
-      }
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final results = data['results'][0];
+      final location = results['geometry']['location'];
+      final lat = location['lat'];
+      final lng = location['lng'];
+
+      print('Fetched coordinates for $fullAddress: Lat: $lat, Lng: $lng');
+      return {'latitude': lat, 'longitude': lng};
     } else {
-      // Handle the error case
-      print('Failed to fetch data');
+      print('Failed to fetch coordinates for $fullAddress');
+      throw Exception('Failed to fetch coordinates');
     }
   }
 
-  //Call API Start
+  // Call this function to get latitude and longitude for both addresses
+   Future<void> getAddressCoordinates() async {
+    try {
+      var officeLatLng = await getLatLngFromAddress(
+        officeStreet,
+        officeArea,
+        officeCity,
+        officeState,
+      );
+
+      var residentialLatLng = await getLatLngFromAddress(
+        street1,
+        area1,
+        city1,
+        state1,
+      );
+
+      print('Office Latitude: ${officeLatLng['latitude']}');
+      print('Office Longitude: ${officeLatLng['longitude']}');
+      print('Residential Latitude: ${residentialLatLng['latitude']}');
+      print('Residential Longitude: ${residentialLatLng['longitude']}');
+
+      // Set the text controllers after coordinates have been fetched
+      setState(() {
+        officeLatitude = officeLatLng['latitude'] as double;
+        officeLongitude = officeLatLng['longitude'] as double;
+        residentialLatitude = residentialLatLng['latitude'] as double;
+        residentialLongitude = residentialLatLng['longitude'] as double;
+      });
+      setState(() {
+        // After setting the values in the state, you can update the controllers
+        officeLatitudeController.text = officeLatitude.toString();
+        officeLongitudeController.text = officeLongitude.toString();
+        ;
+        residentialLatitudeController.text = residentialLatitude.toString();
+        ;
+        residentialLongitudeController.text = residentialLongitude.toString();
+        ;
+      });
+    } catch (e) {
+      // Handle error
+      print('Error fetching coordinates: $e');
+    }
+  }
+
+  // Call API Start
   void registerDonor() {
+    // Call the function to fetch latitude and longitude
+    getAddressCoordinates();
+
+    if (!_formKey.currentState!.validate()) {
+      // Form validation failed, do not proceed with the API call
+      return;
+    }
+
+    // Rest of your code for API call goes here...
     // Create a map to hold the form data
     Map<String, dynamic> formData = {
       'name': name,
@@ -101,13 +164,18 @@ class _NextPageState extends State<NextPage> {
       'state1': state1,
       'country1': country1,
       'mobileNumber': mobileNumber,
+      'officeLatitude': officeLatitude,
+      'officeLongitude': officeLongitude,
+      'residentialLatitude': residentialLatitude,
+      'residentialLongitude': residentialLongitude,
     };
 
     // Convert the form data to JSON
     String jsonData = jsonEncode(formData);
 
     // Make a POST request to the API endpoint
-    Uri url = Uri.parse(base_url + 'register');
+    Uri url =
+        Uri.parse('https://bzadevops.co.in/BloodDonationApp/api/register');
     http.post(url,
         body: jsonData,
         headers: {'Content-Type': 'application/json'}).then((response) {
@@ -145,6 +213,7 @@ class _NextPageState extends State<NextPage> {
       }
     });
   }
+
   // API Call End
 
   @override
@@ -154,11 +223,11 @@ class _NextPageState extends State<NextPage> {
         backgroundColor: Colors.black,
         title: const Text('Blood Donor Registration'),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey, // Assign the form key
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -181,12 +250,17 @@ class _NextPageState extends State<NextPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Blood Group',
+                        'Blood Group*',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (selectedBloodGroup.isEmpty)
+                        Text(
+                          'Blood Group is required',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       const SizedBox(height: 10),
                       TypeAheadFormField<String?>(
                         textFieldConfiguration: TextFieldConfiguration(
@@ -197,9 +271,10 @@ class _NextPageState extends State<NextPage> {
                           ),
                         ),
                         suggestionsCallback: (pattern) {
-                          return bloodGroups.where((bloodGroup) => bloodGroup
-                              .toLowerCase()
-                              .contains(pattern.toLowerCase()));
+                          return bloodGroups.where((bloodGroup) =>
+                              bloodGroup
+                                  .toLowerCase()
+                                  .contains(pattern.toLowerCase()));
                         },
                         itemBuilder: (context, suggestion) {
                           return ListTile(
@@ -213,7 +288,7 @@ class _NextPageState extends State<NextPage> {
                         },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please select Blood Group';
+                            return 'Blood Group is required';
                           }
                           return null;
                         },
@@ -228,12 +303,12 @@ class _NextPageState extends State<NextPage> {
                       name = value;
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
+                  decoration: InputDecoration(
+                    labelText: 'Name*',
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter name';
+                    if (name.isEmpty) {
+                      return 'Name is required';
                     }
                     return null;
                   },
@@ -245,20 +320,17 @@ class _NextPageState extends State<NextPage> {
                       designation = value;
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Designation',
+                  decoration: InputDecoration(
+                    labelText: 'Designation*',
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter designation';
+                    if (designation.isEmpty) {
+                      return 'Designation is required';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 10),
-
-                //Office Address
-
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Color.fromARGB(255, 0, 149, 0)),
@@ -269,7 +341,7 @@ class _NextPageState extends State<NextPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Office Address',
+                        'Office Address*',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -280,127 +352,41 @@ class _NextPageState extends State<NextPage> {
                         children: [
                           Expanded(
                             flex: 5,
-                            child: TextField(
-                              onChanged: (value) {
-                                setState(() {
-                                  officeStreet = value;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Address 1',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
                                   officeArea = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'Address 2',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      // Cities Dropdown
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 300,
-                          child: TypeAheadFormField<String>(
-                            textFieldConfiguration: TextFieldConfiguration(
                               decoration: InputDecoration(
-                                labelText: 'Select a City',
-                                suffixIcon: officeCity.isNotEmpty
-                                    ? GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            officeCity = '';
-                                          });
-                                        },
-                                        child: Icon(Icons.close),
-                                      )
-                                    : null, // Set suffixIcon to null if officeCity is empty
+                                labelText: 'Area/Locality*',
                               ),
-                              controller:
-                                  TextEditingController(text: officeCity),
-                            ),
-                            suggestionsCallback: (pattern) async {
-                              await Future.delayed(Duration(seconds: 1));
-                              return data
-                                  .map<String>(
-                                      (item) => item['city'].toString())
-                                  .where((city) => city
-                                      .toLowerCase()
-                                      .contains(pattern.toLowerCase()))
-                                  .toList();
-                            },
-                            itemBuilder: (context, suggestion) {
-                              return ListTile(
-                                title: Text(suggestion),
-                              );
-                            },
-                            onSuggestionSelected: (suggestion) {
-                              setState(() {
-                                officeCity = suggestion;
-                                final matchingData = data.firstWhere(
-                                  (item) =>
-                                      item['city'].toString() == suggestion,
-                                  orElse: () => null,
-                                );
-                                officeDistrict =
-                                    matchingData?['district'].toString();
-                                officeState = matchingData?['state'].toString();
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a City';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextField(
-                              onChanged: (value) {
-                                setState(() {
-                                  officeDistrict = value;
-                                });
+                              validator: (value) {
+                                if (officeArea.isEmpty) {
+                                  return 'Area/Locality is required';
+                                }
+                                return null;
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'District',
-                              ),
-                              controller: TextEditingController(
-                                  text: officeDistrict), // Set default value
-                              enabled: false, // Disable the text field
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
-                                  officeState = value;
+                                  officeStreet = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'State',
+                              decoration: InputDecoration(
+                                labelText: 'Street/Road*',
                               ),
-                              controller: TextEditingController(
-                                  text: officeState), // Set default value
-                              enabled: false, // Disable the text field
+                              validator: (value) {
+                                if (officeStreet.isEmpty) {
+                                  return 'Street/Road is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ],
@@ -410,32 +396,125 @@ class _NextPageState extends State<NextPage> {
                         children: [
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
+                                  officeDistrict = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'District*',
+                              ),
+                              validator: (value) {
+                                if (officeDistrict.isEmpty) {
+                                  return 'District is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
+                                  officeState = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'State*',
+                              ),
+                              validator: (value) {
+                                if (officeState.isEmpty) {
+                                  return 'State is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
+                                  officeCity = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'City*',
+                              ),
+                              validator: (value) {
+                                if (officeCity.isEmpty) {
+                                  return 'City is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
                                   officePincode = value;
                                 });
                               },
                               decoration: InputDecoration(
-                                labelText: 'Pincode',
+                                labelText: 'Pincode*',
                               ),
+                              validator: (value) {
+                                if (officePincode.isEmpty) {
+                                  return 'Pincode is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        onChanged: (value) {
+                          setState(() {
+                            officeCountry = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Country*',
+                        ),
+                        controller: TextEditingController(
+                            text: 'India'), // Set default value
+                        enabled: false, // Disable the text field
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Office Latitude*',
+                              ),
+                              controller: officeLatitudeController,
+                              enabled: false,
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             flex: 5,
-                            child: TextField(
-                              onChanged: (value) {
-                                setState(() {
-                                  officeCountry = value;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Country',
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Office Longitude*',
                               ),
-                              controller: TextEditingController(
-                                  text: 'India'), // Set default value
-                              enabled: false, // Disable the text field
+                              controller: officeLongitudeController,
+                              enabled: false,
                             ),
                           ),
                         ],
@@ -444,7 +523,6 @@ class _NextPageState extends State<NextPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Residential Address
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Color.fromARGB(255, 0, 149, 0)),
@@ -455,7 +533,7 @@ class _NextPageState extends State<NextPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Residential Address',
+                        'Residential Address*',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -466,127 +544,85 @@ class _NextPageState extends State<NextPage> {
                         children: [
                           Expanded(
                             flex: 5,
-                            child: TextField(
-                              onChanged: (value) {
-                                setState(() {
-                                  street1 = value;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Address 1',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
                                   area1 = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'Address 2',
+                              decoration: InputDecoration(
+                                labelText: 'Area/Locality*',
                               ),
+                              validator: (value) {
+                                if (area1.isEmpty) {
+                                  return 'Area/Locality is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
+                                  street1 = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Street/Road*',
+                              ),
+                              validator: (value) {
+                                if (street1.isEmpty) {
+                                  return 'Street/Road is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // Cities Dropdown
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 300,
-                          child: TypeAheadFormField<String>(
-                            textFieldConfiguration: TextFieldConfiguration(
-                              decoration: InputDecoration(
-                                labelText: 'Select a City',
-                                suffixIcon: city1.isNotEmpty
-                                    ? GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            city1 = '';
-                                          });
-                                        },
-                                        child: Icon(Icons.close),
-                                      )
-                                    : null, // Set suffixIcon to null if city1 is empty
-                              ),
-                              controller: TextEditingController(text: city1),
-                            ),
-                            suggestionsCallback: (pattern) async {
-                              await Future.delayed(Duration(seconds: 1));
-                              return data
-                                  .map<String>(
-                                      (item) => item['city'].toString())
-                                  .where((city) => city
-                                      .toLowerCase()
-                                      .contains(pattern.toLowerCase()))
-                                  .toList();
-                            },
-                            itemBuilder: (context, suggestion) {
-                              return ListTile(
-                                title: Text(suggestion),
-                              );
-                            },
-                            onSuggestionSelected: (suggestion) {
-                              setState(() {
-                                city1 = suggestion;
-                                final matchingData = data.firstWhere(
-                                  (item) =>
-                                      item['city'].toString() == suggestion,
-                                  orElse: () => null,
-                                );
-                                district1 =
-                                    matchingData?['district'].toString();
-                                state1 = matchingData?['state'].toString();
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a City';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ),
-
                       Row(
                         children: [
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
                                   district1 = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'District',
+                              decoration: InputDecoration(
+                                labelText: 'District*',
                               ),
-                              controller: TextEditingController(
-                                  text: district1), // Set default value
-                              enabled: false, // Disable the text field
+                              validator: (value) {
+                                if (district1.isEmpty) {
+                                  return 'District is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
                                   state1 = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'State',
+                              decoration: InputDecoration(
+                                labelText: 'State*',
                               ),
-                              controller: TextEditingController(
-                                  text: state1), // Set default value
-                              enabled: false, // Disable the text field
+                              validator: (value) {
+                                if (state1.isEmpty) {
+                                  return 'State is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ],
@@ -596,32 +632,81 @@ class _NextPageState extends State<NextPage> {
                         children: [
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
-                                  pincode1 = value;
+                                  city1 = value;
                                 });
                               },
                               decoration: InputDecoration(
-                                labelText: 'Pincode',
+                                labelText: 'City*',
                               ),
+                              validator: (value) {
+                                if (city1.isEmpty) {
+                                  return 'City is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             flex: 5,
-                            child: TextField(
+                            child: TextFormField(
                               onChanged: (value) {
+                                getAddressCoordinates();
                                 setState(() {
-                                  country1 = value;
+                                  pincode1 = value;
                                 });
                               },
-                              decoration: const InputDecoration(
-                                labelText: 'Country',
+                              decoration: InputDecoration(
+                                labelText: 'Pincode*',
                               ),
-                              controller: TextEditingController(
-                                  text: 'India'), // Set default value
-                              enabled: false, // Disable the text field
+                              validator: (value) {
+                                if (pincode1.isEmpty) {
+                                  return 'Pincode is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        onChanged: (value) {
+                          setState(() {
+                            country1 = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Country*',
+                        ),
+                        controller: TextEditingController(
+                            text: 'India'), // Set default value
+                        enabled: false, // Disable the text field
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Residential Latitude*',
+                              ),
+                              controller: residentialLatitudeController,
+                              enabled: false,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Residential Longitude*',
+                              ),
+                              controller: residentialLongitudeController,
+                              enabled: false,
                             ),
                           ),
                         ],
@@ -636,23 +721,20 @@ class _NextPageState extends State<NextPage> {
                       mobileNumber = value;
                     });
                   },
-                  decoration: const InputDecoration(
-                    labelText: 'Mobile Number',
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Mobile Number*',
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please Enter Mobile Number';
+                    if (mobileNumber.isEmpty) {
+                      return 'Mobile Number is required';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      registerDonor();
-                    }
-                  },
+                  onPressed: registerDonor,
                   child: const Text('Register'),
                 ),
               ],
