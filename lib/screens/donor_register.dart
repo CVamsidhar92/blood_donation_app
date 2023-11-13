@@ -70,7 +70,8 @@ class _RegisterState extends State<Register> {
   // Function to fetch latitude and longitude from address
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
-    final apiKey = 'API_KEY'; // Replace with your API key
+    final apiKey =
+        'API_KEY'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
