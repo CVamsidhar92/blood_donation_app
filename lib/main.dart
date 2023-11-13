@@ -1,5 +1,7 @@
+import 'package:blood_donation/screens/donor_register.dart';
+import 'package:blood_donation/screens/login.dart';
+import 'package:blood_donation/screens/splash.dart';
 import 'package:flutter/material.dart';
-import 'package:blood_donation/home_page.dart' as Home;
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +18,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const Home.HomePage(), // Specify the HomePage using the assigned prefix
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => Splash(),
+        '/Login': (context) => Login(),
+         '/Register': (context) => Register(),
+      },
     );
   }
 }

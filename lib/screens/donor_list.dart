@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -222,6 +223,37 @@ class _DonorListScreenState extends State<DonorListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Donors List'),
+        actions: <Widget>[
+          InkWell(
+            onTap: () {
+              Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (context) =>
+                    Login(), // Replace with the actual login screen widget
+              ));
+            },
+            child: Row(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: Icon(
+                    Icons.logout_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: 20.0),
+                  child: Text(
+                    'Logout',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
