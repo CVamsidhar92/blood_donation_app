@@ -71,8 +71,7 @@ class _RegisterState extends State<Register> {
   // Function to fetch latitude and longitude from address
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
-    final apiKey =
-        'API_KEY'; // Replace with your API key
+    final apiKey = 'API_KEY'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
@@ -539,6 +538,14 @@ class _RegisterState extends State<Register> {
                               ),
                               controller: officeLatitudeController,
                               enabled: false,
+                              validator: (value) {
+                                // Add your validation logic here
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter correct address.';
+                                }
+                                // You can add more validation checks as needed
+                                return null; // Return null if the input is valid
+                              },
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -550,6 +557,14 @@ class _RegisterState extends State<Register> {
                               ),
                               controller: officeLongitudeController,
                               enabled: false,
+                              validator: (value) {
+                                // Add your validation logic here
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter correct address.';
+                                }
+                                // You can add more validation checks as needed
+                                return null; // Return null if the input is valid
+                              },
                             ),
                           ),
                         ],
@@ -738,6 +753,14 @@ class _RegisterState extends State<Register> {
                               ),
                               controller: residentialLatitudeController,
                               enabled: false,
+                              validator: (value) {
+                                // Add your validation logic here
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter correct address.';
+                                }
+                                // You can add more validation checks as needed
+                                return null; // Return null if the input is valid
+                              },
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -749,6 +772,14 @@ class _RegisterState extends State<Register> {
                               ),
                               controller: residentialLongitudeController,
                               enabled: false,
+                              validator: (value) {
+                                // Add your validation logic here
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter correct address.';
+                                }
+                                // You can add more validation checks as needed
+                                return null; // Return null if the input is valid
+                              },
                             ),
                           ),
                         ],
@@ -904,27 +935,26 @@ class _OtpScreenState extends State<OtpScreen> {
     }
   }
 
-void _onVerifyButtonPressed() {
-  if (otp.isEmpty) {
-    // Show a red SnackBar for empty OTP input field
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Please enter OTP',
-          style: TextStyle(color: Colors.white), // Set text color to white
+  void _onVerifyButtonPressed() {
+    if (otp.isEmpty) {
+      // Show a red SnackBar for empty OTP input field
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter OTP',
+            style: TextStyle(color: Colors.white), // Set text color to white
+          ),
+          backgroundColor: Colors.red, // Set background color to red
         ),
-        backgroundColor: Colors.red, // Set background color to red
-      ),
-    );
-    return; // Exit the method if OTP is empty
-  }
+      );
+      return; // Exit the method if OTP is empty
+    }
 
-  if (_formKey.currentState!.validate()) {
-    verifyOtp(widget.name, widget.password, widget.mobile, otp);
-    print('OTP verification initiated');
+    if (_formKey.currentState!.validate()) {
+      verifyOtp(widget.name, widget.password, widget.mobile, otp);
+      print('OTP verification initiated');
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -965,7 +995,7 @@ void _onVerifyButtonPressed() {
                     ),
                     SizedBox(height: 20),
                     Container(
-                       width: 200,
+                      width: 200,
                       height: 50,
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black),
