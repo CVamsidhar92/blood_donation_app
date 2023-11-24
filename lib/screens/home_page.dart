@@ -1,8 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:blood_donation/screens/donor_list.dart';
 import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
-import 'donor_register.dart';
 import 'find_donor.dart';
 import 'base_url.dart';
 import 'package:http/http.dart' as http;
@@ -11,7 +11,9 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  String mobileNo;
+
+  HomePage({Key? key, required this.mobileNo}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -20,6 +22,27 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final myVersion = '1.2';
   late BuildContext dialogContext;
+  late String selectedBloodGroup ='A+';
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  List<String> bloodGroups = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-',
+    'A1+',
+    'A1-',
+    'A2+',
+    'A2-',
+    'A1B+',
+    'A1B-',
+    'A2B+',
+    'A2B-'
+  ];
 
   @override
   void initState() {
@@ -99,7 +122,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Blood Donation App'),
-         automaticallyImplyLeading: false,
+        automaticallyImplyLeading: false,
         actions: <Widget>[
           InkWell(
             onTap: () {
@@ -185,16 +208,79 @@ class _HomePageState extends State<HomePage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
+            FractionallySizedBox(
+              widthFactor:
+                  0.8, // Adjust the width factor according to your needs
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Text(
+                      'Please Select Blood Group',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 241, 14, 14),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: selectedBloodGroup,
+                      items: bloodGroups.map((String bloodGroup) {
+                        return DropdownMenuItem<String>(
+                          value: bloodGroup,
+                          child: Text(bloodGroup),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedBloodGroup = newValue!;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      style: TextStyle(color: Colors.black),
+                      dropdownColor: Colors.white,
+                      isExpanded: false,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a blood group';
+                        }
+                        return null;
+                      },
+                    )
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               height: 45,
               child: FractionallySizedBox(
                 widthFactor: 0.5,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => FindDonor()),
-                    );
+                    if (_formKey.currentState?.validate() ?? false) {
+                      // Proceed with the button action
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => DonorListScreen(
+                                bloodGroup: selectedBloodGroup,mobileNo: widget.mobileNo)),
+                      );
+                    } else {
+                      // Show a snackbar if form validation fails
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please select a blood group'),
+                        ),
+                      );
+                    }
                   },
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(

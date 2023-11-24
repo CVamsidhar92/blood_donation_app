@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/services.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -139,7 +140,7 @@ class _RegisterState extends State<Register> {
   }
 
   // Call API Start
-  void registerDonor() {
+  void registerDonor() async {
     // Call the function to fetch latitude and longitude
     getAddressCoordinates();
 
@@ -148,6 +149,16 @@ class _RegisterState extends State<Register> {
       return;
     }
 
+    bool isUserExists = await checkUserExistence();
+
+    if (isUserExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mobile number is already registered, Please Login.'),
+        ),
+      );
+      return;
+    }
     // Rest of your code for API call goes here...
     // Create a map to hold the form data
     Map<String, dynamic> formData = {
@@ -203,9 +214,29 @@ class _RegisterState extends State<Register> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OtpScreen(mobile: mobileNumber),
+        builder: (context) =>
+            OtpScreen(mobile: mobileNumber, name: name, password: password),
       ),
     );
+  }
+
+// Function to check if the user already exists based on the mobile number
+  Future<bool> checkUserExistence() async {
+    // Make a request to your backend to check if the user exists
+    Uri checkUrl = Uri.parse(base_url + 'checkUser');
+    http.Response checkResponse = await http.post(checkUrl, body: {
+      'mobileNumber': mobileNumber,
+    });
+
+    if (checkResponse.statusCode == 200) {
+      // Parse the response to determine if the user exists
+      Map<String, dynamic> responseData = json.decode(checkResponse.body);
+      String status = responseData['status'];
+      return status == 'Duplicate';
+    } else {
+      // Handle the error or assume the user doesn't exist
+      return false;
+    }
   }
 
   // API Call End
@@ -398,6 +429,27 @@ class _RegisterState extends State<Register> {
                             child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
+                                  officeCity = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'City*',
+                              ),
+                              //  enabled: areInputFieldsEnabled,
+                              validator: (value) {
+                                if (officeCity.isEmpty) {
+                                  return 'City is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
                                   officeDistrict = value;
                                 });
                               },
@@ -413,7 +465,11 @@ class _RegisterState extends State<Register> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
                           Expanded(
                             flex: 5,
                             child: TextFormField(
@@ -429,31 +485,6 @@ class _RegisterState extends State<Register> {
                               validator: (value) {
                                 if (officeState.isEmpty) {
                                   return 'State is required';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              onChanged: (value) {
-                                setState(() {
-                                  officeCity = value;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'City*',
-                              ),
-                              //  enabled: areInputFieldsEnabled,
-                              validator: (value) {
-                                if (officeCity.isEmpty) {
-                                  return 'City is required';
                                 }
                                 return null;
                               },
@@ -597,6 +628,27 @@ class _RegisterState extends State<Register> {
                             child: TextFormField(
                               onChanged: (value) {
                                 setState(() {
+                                  city1 = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'City*',
+                              ),
+                              //  enabled: areInputFieldsEnabled,
+                              validator: (value) {
+                                if (city1.isEmpty) {
+                                  return 'City is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 5,
+                            child: TextFormField(
+                              onChanged: (value) {
+                                setState(() {
                                   district1 = value;
                                 });
                               },
@@ -612,7 +664,11 @@ class _RegisterState extends State<Register> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 10),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
                           Expanded(
                             flex: 5,
                             child: TextFormField(
@@ -628,31 +684,6 @@ class _RegisterState extends State<Register> {
                               validator: (value) {
                                 if (state1.isEmpty) {
                                   return 'State is required';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              onChanged: (value) {
-                                setState(() {
-                                  city1 = value;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'City*',
-                              ),
-                              //  enabled: areInputFieldsEnabled,
-                              validator: (value) {
-                                if (city1.isEmpty) {
-                                  return 'City is required';
                                 }
                                 return null;
                               },
@@ -753,9 +784,14 @@ class _RegisterState extends State<Register> {
                   decoration: InputDecoration(labelText: 'Password'),
                   obscureText: true,
                   validator: (value) {
-                    if (password.isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return 'Password is required';
+                    } else if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
                     }
+                    // else if (!RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#$%^&*()_+{}|:;<>,.?~\\-])').hasMatch(value)) {
+                    //   return 'must contain uppercase,lowercase,digit, and one special character';
+                    // }
                     return null;
                   },
                 ),
@@ -791,8 +827,15 @@ class _RegisterState extends State<Register> {
 }
 
 class OtpScreen extends StatefulWidget {
+  final String name;
+  final String password;
   final String mobile;
-  const OtpScreen({Key? key, required this.mobile}) : super(key: key);
+  const OtpScreen(
+      {Key? key,
+      required this.name,
+      required this.password,
+      required this.mobile})
+      : super(key: key);
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -802,23 +845,86 @@ class _OtpScreenState extends State<OtpScreen> {
   final _formKey = GlobalKey<FormState>();
   String otp = '';
 
-  void verifyOTP() {
-    // Replace this logic with your actual OTP verification process
-    if (otp == '1234') {
-      // If OTP is valid, you can use widget.mobileNumber here
-      // For example, print the mobile number
-      print('Mobile Number: ${widget.mobile}');
+  Future<void> verifyOtp(
+      String name, String password, String mobileNumber, String otp) async {
+    final String apiUrl = base_url + 'verifyOtp';
 
-      // Then you can navigate to the next screen (e.g., HomePage)
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
+    final Map<String, dynamic> data = {
+      'mobileNo': mobileNumber,
+      'otp': otp,
+      'name': name,
+      'password': password,
+    };
+
+    final http.Response response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final List<dynamic>? dataList =
+          responseData['data']; // Add '?' for null safety
+
+      if (dataList != null && dataList.isNotEmpty) {
+        // Check for null before accessing properties
+        final Map<String, dynamic> userData = dataList[0];
+        final String receivedOtp = userData['otp'];
+
+        if (receivedOtp == otp) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('OTP is valid'),
+            ),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(mobileNo: mobileNumber),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invalid OTP. Please try again.'),
+          ),
+        );
+      }
     } else {
-      // Handle incorrect OTP
-      // Show an error message or allow the user to retry
+      // Print the error response body
+      print('Error response body: ${response.body}');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error verifying OTP. Please try again.'),
+        ),
+      );
     }
   }
+
+void _onVerifyButtonPressed() {
+  if (otp.isEmpty) {
+    // Show a red SnackBar for empty OTP input field
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Please enter OTP',
+          style: TextStyle(color: Colors.white), // Set text color to white
+        ),
+        backgroundColor: Colors.red, // Set background color to red
+      ),
+    );
+    return; // Exit the method if OTP is empty
+  }
+
+  if (_formKey.currentState!.validate()) {
+    verifyOtp(widget.name, widget.password, widget.mobile, otp);
+    print('OTP verification initiated');
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -831,7 +937,7 @@ class _OtpScreenState extends State<OtpScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
-            key: _formKey, // Assign the form key
+            key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -843,29 +949,59 @@ class _OtpScreenState extends State<OtpScreen> {
                     color: Color.fromARGB(255, 249, 28, 46),
                   ),
                 ),
-                const SizedBox(
-                    height: 10), // Display OTP input fields if registered
+                const SizedBox(height: 10),
                 Column(
                   children: [
-                    Text(
-                      'Please enter the OTP sent to your mobile number',
-                      style: TextStyle(fontSize: 16),
+                    Image.asset(
+                      'assets/images/otpicon.png', // Replace with the path to your image
+                      height: 100, // Adjust the height as needed
                     ),
                     SizedBox(height: 20),
-                    TextFormField(
-                      onChanged: (value) {
-                        setState(() {
-                          otp = value;
-                        });
-                      },
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: 'Enter OTP'),
+                    Center(
+                      child: Text(
+                        'Please enter the OTP sent to your mobile number',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                       width: 200,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextFormField(
+                        onChanged: (value) {
+                          setState(() {
+                            otp = value;
+                          });
+                        },
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                          LengthLimitingTextInputFormatter(6),
+                        ],
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                          border: InputBorder.none,
+                          prefix: Container(
+                            width: 40,
+                            alignment: Alignment.center, // Center the text
+                            child: Text(
+                              'OTP', // Replace with your desired text
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                     SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        verifyOTP();
-                      },
+                      onPressed: _onVerifyButtonPressed,
                       child: Text('Verify OTP'),
                     ),
                   ],

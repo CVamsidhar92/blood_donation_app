@@ -10,17 +10,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'base_url.dart';
 
 class DonorListScreen extends StatefulWidget {
-  final String? bloodGroup;
-  final String? state;
-  final String? district;
-  final String city;
+  final String bloodGroup;
+  final String mobileNo;
 
   DonorListScreen({
     Key? key,
     required this.bloodGroup,
-    required this.state,
-    required this.district,
-    required this.city,
+    required this.mobileNo
   }) : super(key: key);
 
   @override
@@ -56,6 +52,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
     super.initState();
     donorData = fetchData();
     requestLocationPermissionAndGetCurrentLocation();
+    print(widget.bloodGroup);
   }
 
   double calculateDistance(
@@ -119,10 +116,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
   Future<List<Map<String, dynamic>>> fetchData() async {
     final url = base_url + 'donor_list1';
     final body = {
-      'bloodGroup': widget.bloodGroup ?? '',
-      'state': widget.state ?? '',
-      'district': widget.district ?? '',
-      'city': widget.city,
+      'bloodGroup': widget.bloodGroup,
     };
 
     try {
@@ -131,8 +125,38 @@ class _DonorListScreenState extends State<DonorListScreen> {
         final jsonData = json.decode(response.body);
         if (jsonData is List) {
           final data = List<Map<String, dynamic>>.from(jsonData);
-          isExpandedList = List<bool>.filled(data.length, false);
-          return data;
+
+          // Filter data based on distance
+          final filteredData = data.where((item) {
+            final officeLat = parseDouble(item['office_latitude'] as String?);
+            final officeLon = parseDouble(item['office_longitude'] as String?);
+            final resLat = parseDouble(item['residential_latitude'] as String?);
+            final resLon =
+                parseDouble(item['residential_longitude'] as String?);
+
+            if (officeLat != null &&
+      officeLon != null &&
+      latitude != null &&
+      longitude != null) {
+    final distance = calculateDistance(
+        latitude!, longitude!, officeLat, officeLon);
+    item['distance'] = distance; // Store the distance in the item
+    return distance <= (selectedDistance == '10kms' ? 10.0 : 5.0);
+  } else if (resLat != null &&
+      resLon != null &&
+      latitude != null &&
+      longitude != null) {
+    final distance = calculateDistance(latitude!, longitude!, resLat, resLon);
+    item['distance'] = distance; // Store the distance in the item
+    return distance <= (selectedDistance == '10kms' ? 10.0 : 5.0);
+  } else {
+    return false;
+  }
+}).toList();
+
+          isExpandedList = List<bool>.filled(filteredData.length, false);
+
+          return filteredData;
         } else {
           throw Exception('Invalid data format received from API');
         }
@@ -196,8 +220,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
     final itemResAddress2 = item['residential_area'] as String?;
     final itemResCity = item['residential_city'] as String?;
 
-    final cardDetails =
-        '''
+    final cardDetails = '''
     Name:- $itemName    
     Blood Group:- $itemBloodGroup
     Mobile No:- $itemMobileNo
@@ -264,22 +287,33 @@ class _DonorListScreenState extends State<DonorListScreen> {
               children: distanceOptions.keys.map((option) {
                 return Row(
                   children: [
-                    Radio(
-                      value: option,
-                      groupValue: selectedDistance,
-                      onChanged: (value) {
+                    GestureDetector(
+                      onTap: () {
                         setState(() {
-                          selectedDistance = value.toString();
+                          selectedDistance = option;
                         });
                       },
+                      child: Row(
+                        children: [
+                          Radio(
+                            value: option,
+                            groupValue: selectedDistance,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedDistance = value.toString();
+                              });
+                            },
+                          ),
+                          Text(distanceOptions[option]!),
+                        ],
+                      ),
                     ),
-                    Text(distanceOptions[option]!),
                   ],
                 );
               }).toList(),
             ),
           ),
-          Expanded(
+         Expanded(
             child: Container(
               padding: const EdgeInsets.all(16.0),
               child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -334,7 +368,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
                             }
                           }).toList();
 
-                    return SingleChildScrollView(
+                   return SingleChildScrollView(
                       child: Column(
                         children: [
                           ListView.builder(
@@ -343,89 +377,117 @@ class _DonorListScreenState extends State<DonorListScreen> {
                             itemCount: filteredData.length,
                             itemBuilder: (context, index) {
                               final item = filteredData[index];
+                              // Skip the current user's data
+                              if (item['mobile_no'] == widget.mobileNo) {
+                                return SizedBox.shrink();
+                              }
                               bool isExpanded = isExpandedList[index];
                               final itemName = item['name'] as String?;
                               final itemMobileNo = item['mobile_no'] as String?;
                               final itemDesig = item['desig'] as String?;
                               final itemOfficeCity =
                                   item['office_city'] as String?;
+                              final itemResCity = item['residential_city'] as String?;
+                              final itemDistance = item['distance'] as double?;
 
                               return Card(
-                                child: ExpansionTile(
-                                  title: Column(
-                                    children: [
-                                      Text(
-                                        itemName ?? '',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 24,
-                                        ),
-                                      ),
-                                      Text(
-                                        itemMobileNo ?? '',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.normal,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                child: Stack(
                                   children: [
-                                    ListTile(
-                                      title: Text(
-                                        itemDesig ?? '',
-                                        style: const TextStyle(
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                    ExpansionTile(
+                                      title: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const SizedBox(height: 8),
                                           Text(
-                                            itemOfficeCity ?? '',
+                                            'Name: ${itemName ?? ''}',
                                             style: const TextStyle(
-                                              color: Colors.blueAccent,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Mobile : ${itemMobileNo ?? ''}',
+                                            textAlign: TextAlign.start,
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.normal,
                                               fontSize: 18,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(Icons.call),
-                                            onPressed: () {
-                                              _launchPhoneCall(
-                                                  item['mobile_no'] as String?);
-                                            },
+                                      children: [
+                                        ListTile(
+                                          title: Text(
+                                            'Desig: ${itemDesig ?? ''}',
+                                            style: const TextStyle(
+                                              color: Colors.blue,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
                                           ),
-                                          IconButton(
-                                            icon: Icon(Icons.share),
-                                            onPressed: () {
-                                              final cardDetails =
-                                                  buildCardDetails(item);
-                                              _shareCardDetails(cardDetails);
-                                            },
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Office: ${itemOfficeCity ?? ''}',
+                                                style: const TextStyle(
+                                                  color: Colors.blueAccent,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Res: ${itemResCity ?? ''}',
+                                                style: const TextStyle(
+                                                  color: Colors.blueAccent,
+                                                  fontSize: 18,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                          trailing: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.call),
+                                                onPressed: () {
+                                                  _launchPhoneCall(
+                                                      item['mobile_no'] as String?);
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.share),
+                                                onPressed: () {
+                                                  final cardDetails =
+                                                      buildCardDetails(item);
+                                                  _shareCardDetails(cardDetails);
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                      onExpansionChanged: (expanded) {
+                                        setState(() {
+                                          isExpandedList[index] = expanded;
+                                        });
+                                      },
+                                      initiallyExpanded: isExpanded,
+                                    ),
+                                    Positioned(
+                                      bottom: 4.0,
+                                      right: 4.0,
+                                      child: Text(
+                                        '${itemDistance?.toStringAsFixed(2)} kms',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                        ),
                                       ),
                                     ),
                                   ],
-                                  onExpansionChanged: (expanded) {
-                                    setState(() {
-                                      isExpandedList[index] = expanded;
-                                    });
-                                  },
-                                  initiallyExpanded: isExpanded,
                                 ),
                               );
                             },
