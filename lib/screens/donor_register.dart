@@ -64,8 +64,7 @@ class _RegisterState extends State<Register> {
   TextEditingController officeLatitudeController = TextEditingController();
   TextEditingController officeLongitudeController = TextEditingController();
   TextEditingController residentialLatitudeController = TextEditingController();
-  TextEditingController residentialLongitudeController =
-      TextEditingController();
+  TextEditingController residentialLongitudeController = TextEditingController();
   String otp = '';
 
   // Function to fetch latitude and longitude from address
@@ -104,6 +103,28 @@ class _RegisterState extends State<Register> {
         officeState,
       );
 
+      print('Office Latitude: ${officeLatLng['latitude']}');
+      print('Office Longitude: ${officeLatLng['longitude']}');
+
+      // Set the text controllers after coordinates have been fetched
+      setState(() {
+        officeLatitude = officeLatLng['latitude'] as double;
+        officeLongitude = officeLatLng['longitude'] as double;
+      });
+      setState(() {
+        // After setting the values in the state, you can update the controllers
+        officeLatitudeController.text = officeLatitude.toString();
+        officeLongitudeController.text = officeLongitude.toString();
+      });
+    } catch (e) {
+      // Handle error
+      print('Error fetching coordinates: $e');
+    }
+  }
+
+   // Call this function to get latitude and longitude for both addresses
+  Future<void> getAddressCoordinates1() async {
+    try {
       var residentialLatLng = await getLatLngFromAddress(
         street1,
         area1,
@@ -111,25 +132,16 @@ class _RegisterState extends State<Register> {
         state1,
       );
 
-      print('Office Latitude: ${officeLatLng['latitude']}');
-      print('Office Longitude: ${officeLatLng['longitude']}');
       print('Residential Latitude: ${residentialLatLng['latitude']}');
       print('Residential Longitude: ${residentialLatLng['longitude']}');
 
       // Set the text controllers after coordinates have been fetched
       setState(() {
-        officeLatitude = officeLatLng['latitude'] as double;
-        officeLongitude = officeLatLng['longitude'] as double;
         residentialLatitude = residentialLatLng['latitude'] as double;
         residentialLongitude = residentialLatLng['longitude'] as double;
       });
       setState(() {
-        // After setting the values in the state, you can update the controllers
-        officeLatitudeController.text = officeLatitude.toString();
-        officeLongitudeController.text = officeLongitude.toString();
-
         residentialLatitudeController.text = residentialLatitude.toString();
-
         residentialLongitudeController.text = residentialLongitude.toString();
       });
     } catch (e) {
@@ -495,6 +507,7 @@ class _RegisterState extends State<Register> {
                             child: TextFormField(
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
+                                  getAddressCoordinates();
                                 setState(() {
                                   officePincode = value;
                                 });
@@ -710,7 +723,7 @@ class _RegisterState extends State<Register> {
                             child: TextFormField(
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
-                                getAddressCoordinates();
+                                getAddressCoordinates1();
                                 setState(() {
                                   pincode1 = value;
                                 });
