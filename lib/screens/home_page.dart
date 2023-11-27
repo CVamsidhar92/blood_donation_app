@@ -3,7 +3,6 @@
 import 'package:blood_donation/screens/donor_list.dart';
 import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
-import 'find_donor.dart';
 import 'base_url.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';

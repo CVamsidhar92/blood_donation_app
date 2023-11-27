@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:share/share.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,7 +16,7 @@ class DonorListScreen extends StatefulWidget {
   DonorListScreen({
     Key? key,
     required this.bloodGroup,
-    required this.mobileNo
+    required this.mobileNo,
   }) : super(key: key);
 
   @override
@@ -47,17 +47,19 @@ class _DonorListScreenState extends State<DonorListScreen> {
     selectedDistance = matchingEntry.key;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    donorData = fetchData();
-    requestLocationPermissionAndGetCurrentLocation();
-    print(widget.bloodGroup);
-  }
+ @override
+void initState() {
+  super.initState();
+  requestLocationPermissionAndGetCurrentLocation();
+  print(widget.bloodGroup);
+}
 
   double calculateDistance(
-      double? lat1, double? lon1, double? lat2, double? lon2) {
-    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+    double? lat1, double? lon1, double? lat2, double? lon2) {
+    if (lat1 == null ||
+        lon1 == null ||
+        lat2 == null ||
+        lon2 == null) {
       // Handle cases where latitude or longitude is null
       return double.infinity; // Or any other appropriate value
     }
@@ -113,76 +115,81 @@ class _DonorListScreenState extends State<DonorListScreen> {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchData() async {
-    final url = base_url + 'donor_list1';
-    final body = {
-      'bloodGroup': widget.bloodGroup,
-    };
+Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
+  final url = base_url + 'donor_list1';
+  final body = {
+    'bloodGroup': widget.bloodGroup,
+  };
 
-    try {
-      final response = await http.post(Uri.parse(url), body: body);
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        if (jsonData is List) {
-          final data = List<Map<String, dynamic>>.from(jsonData);
+  try {
+    final response = await http.post(Uri.parse(url), body: body);
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      if (jsonData is List) {
+        final data = List<Map<String, dynamic>>.from(jsonData);
 
-          // Filter data based on distance
-          final filteredData = data.where((item) {
-            final officeLat = parseDouble(item['office_latitude'] as String?);
-            final officeLon = parseDouble(item['office_longitude'] as String?);
-            final resLat = parseDouble(item['residential_latitude'] as String?);
-            final resLon =
-                parseDouble(item['residential_longitude'] as String?);
+        // Ensure latitude and longitude are part of the data
+        data.forEach((item) {
+          item['officeLatitude'] = parseDouble(item['office_latitude'] as String?);
+          item['officeLongitude'] = parseDouble(item['office_longitude'] as String?);
+          item['residentialLatitude'] = parseDouble(item['residential_latitude'] as String?);
+          item['residentialLongitude'] = parseDouble(item['residential_longitude'] as String?);
+        });
 
-            if (officeLat != null &&
+        // Filter data based on selected distance
+      final filteredData = data.where((item) {
+  final officeLat = item['officeLatitude'] as double?;
+  final officeLon = item['officeLongitude'] as double?;
+  final resLat = item['residentialLatitude'] as double?;
+  final resLon = item['residentialLongitude'] as double?;
+
+  if (officeLat != null &&
       officeLon != null &&
-      latitude != null &&
-      longitude != null) {
-    final distance = calculateDistance(
-        latitude!, longitude!, officeLat, officeLon);
-    item['distance'] = distance; // Store the distance in the item
-    return distance <= (selectedDistance == '10kms' ? 10.0 : 5.0);
-  } else if (resLat != null &&
+      resLat != null &&
       resLon != null &&
       latitude != null &&
       longitude != null) {
-    final distance = calculateDistance(latitude!, longitude!, resLat, resLon);
-    item['distance'] = distance; // Store the distance in the item
-    return distance <= (selectedDistance == '10kms' ? 10.0 : 5.0);
+    final officeDistance = calculateDistance(latitude!, longitude!, officeLat, officeLon);
+    final resDistance = calculateDistance(latitude!, longitude!, resLat, resLon);
+
+    // Check if the donor is within the selected distance (5kms or 10kms)
+    return officeDistance <= 10.0 || resDistance <= 10.0;
   } else {
     return false;
   }
 }).toList();
 
-          isExpandedList = List<bool>.filled(filteredData.length, false);
 
-          return filteredData;
-        } else {
-          throw Exception('Invalid data format received from API');
-        }
+        isExpandedList = List<bool>.filled(filteredData.length, false);
+        return filteredData;
       } else {
-        throw Exception(
-            'Failed to fetch data from API: ${response.statusCode}');
+        throw Exception('Invalid data format received from API');
       }
-    } catch (error) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: Text('Failed to fetch data from API: $error'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-      return [];
+    } else {
+      throw Exception('Failed to fetch data from API: ${response.statusCode}');
     }
+  } catch (error) {
+    print('Error fetching data from API: $error');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text('Failed to fetch data from API: $error'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+    return [];
   }
+}
+
+
 
   void _launchPhoneCall(String? phoneNumber) async {
     if (phoneNumber != null) {
@@ -234,11 +241,6 @@ class _DonorListScreenState extends State<DonorListScreen> {
 
   void _shareCardDetails(String cardDetails) {
     Share.share(cardDetails);
-  }
-
-  double? parseDouble(String? value) {
-    if (value == null) return null;
-    return double.tryParse(value);
   }
 
   @override
@@ -313,188 +315,187 @@ class _DonorListScreenState extends State<DonorListScreen> {
               }).toList(),
             ),
           ),
-         Expanded(
+          Expanded(
             child: Container(
               padding: const EdgeInsets.all(16.0),
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: donorData,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Text('Error fetching data: ${snapshot.error}');
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No Donors Found.',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  } else {
+                future: fetchData(double.parse(selectedDistance.replaceAll('kms', ''))),
+             builder: (context, snapshot) {
+  if (snapshot.connectionState == ConnectionState.waiting) {
+    return const Center(child: CircularProgressIndicator());
+  } else if (snapshot.hasError) {
+    return Center(
+      child: Text(
+        'Error fetching data: ${snapshot.error}',
+        style: TextStyle(color: Colors.red),
+      ),
+    );
+  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+    return Center(
+      child: Text(
+        'No Donors Found within the specified distance.',
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey, // Adjust color as needed
+        ),
+      ),
+    );
+  } else {
                     final data = snapshot.data!;
-                    final filteredData = selectedDistance == '10kms'
-                        ? data
-                        : data.where((item) {
-                            final officeLat =
-                                parseDouble(item['office_latitude'] as String?);
-                            final officeLon = parseDouble(
-                                item['office_longitude'] as String?);
-                            final resLat = parseDouble(
-                                item['residential_latitude'] as String?);
-                            final resLon = parseDouble(
-                                item['residential_longitude'] as String?);
+                 final filteredData = selectedDistance == '5kms' || selectedDistance == '10kms'
+    ? data
+    : data.where((item) {
+        final officeLat = item['officeLatitude'] as double?;
+        final officeLon = item['officeLongitude'] as double?;
+        final resLat = item['residentialLatitude'] as double?;
+        final resLon = item['residentialLongitude'] as double?;
 
-                            if (officeLat != null &&
-                                officeLon != null &&
-                                latitude != null &&
-                                longitude != null) {
-                              final distance = calculateDistance(
-                                  latitude!, longitude!, officeLat, officeLon);
-                              return distance <=
-                                  10.0; // Adjust this value as needed
-                            } else if (resLat != null &&
-                                resLon != null &&
-                                latitude != null &&
-                                longitude != null) {
-                              final distance = calculateDistance(
-                                  latitude!, longitude!, resLat, resLon);
-                              return distance <=
-                                  10.0; // Adjust this value as needed
-                            } else {
-                              return false;
-                            }
-                          }).toList();
+        if (officeLat != null &&
+            officeLon != null &&
+            resLat != null &&
+            resLon != null &&
+            latitude != null &&
+            longitude != null) {
+          final officeDistance =
+              calculateDistance(latitude!, longitude!, officeLat, officeLon);
+          final resDistance =
+              calculateDistance(latitude!, longitude!, resLat, resLon);
 
-                   return SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          ListView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: filteredData.length,
-                            itemBuilder: (context, index) {
-                              final item = filteredData[index];
-                              // Skip the current user's data
-                              if (item['mobile_no'] == widget.mobileNo) {
-                                return SizedBox.shrink();
-                              }
-                              bool isExpanded = isExpandedList[index];
-                              final itemName = item['name'] as String?;
-                              final itemMobileNo = item['mobile_no'] as String?;
-                              final itemDesig = item['desig'] as String?;
-                              final itemOfficeCity =
-                                  item['office_city'] as String?;
-                              final itemResCity = item['residential_city'] as String?;
-                              final itemDistance = item['distance'] as double?;
+          final maxDistance = double.parse(selectedDistance.replaceAll('kms', ''));
+          return officeDistance <= maxDistance || resDistance <= maxDistance;
+        } else {
+          return false;
+        }
+      }).toList();
 
-                              return Card(
-                                child: Stack(
+
+                    if (filteredData.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No Donors Found within the specified distance.',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    } else {
+                      return ListView.builder(
+  itemCount: filteredData.length,
+  itemBuilder: (context, index) {
+    print('Building card for item at index $index');
+    final item = filteredData[index];
+    print('Item: $item');
+      // Check if the widget's mobile number is the same as the item's mobile number
+    if (widget.mobileNo == item['mobile_no']) {
+      // Do not display the card
+      return SizedBox.shrink(); // This will create an empty, non-visible widget
+    }
+                          return Card(
+                            child: Stack(
+                              children: [
+                                ExpansionTile(
+                                  title: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Name: ${item['name'] ?? ''}',
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 24,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Mobile : ${item['mobile_no'] ?? ''}',
+                                        textAlign: TextAlign.start,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.normal,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   children: [
-                                    ExpansionTile(
-                                      title: Column(
+                                    ListTile(
+                                      title: Text(
+                                        'Desig: ${item['desig'] ?? ''}',
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      subtitle: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
+                                          const SizedBox(height: 8),
                                           Text(
-                                            'Name: ${itemName ?? ''}',
+                                            'Office: ${item['office_city'] ?? ''}',
                                             style: const TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 24,
+                                              color: Colors.blueAccent,
+                                              fontSize: 18,
                                             ),
                                           ),
+                                          const SizedBox(height: 8),
                                           Text(
-                                            'Mobile : ${itemMobileNo ?? ''}',
-                                            textAlign: TextAlign.start,
+                                            'Res: ${item['residential_city'] ?? ''}',
                                             style: const TextStyle(
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.normal,
+                                              color: Colors.blueAccent,
                                               fontSize: 18,
                                             ),
                                           ),
                                         ],
                                       ),
-                                      children: [
-                                        ListTile(
-                                          title: Text(
-                                            'Desig: ${itemDesig ?? ''}',
-                                            style: const TextStyle(
-                                              color: Colors.blue,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            ),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(Icons.call),
+                                            onPressed: () {
+                                              _launchPhoneCall(item['mobile_no'] as String?);
+                                            },
                                           ),
-                                          subtitle: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Office: ${itemOfficeCity ?? ''}',
-                                                style: const TextStyle(
-                                                  color: Colors.blueAccent,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Res: ${itemResCity ?? ''}',
-                                                style: const TextStyle(
-                                                  color: Colors.blueAccent,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
+                                          IconButton(
+                                            icon: Icon(Icons.share),
+                                            onPressed: () {
+                                              final cardDetails = buildCardDetails(item);
+                                              _shareCardDetails(cardDetails);
+                                            },
                                           ),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(Icons.call),
-                                                onPressed: () {
-                                                  _launchPhoneCall(
-                                                      item['mobile_no'] as String?);
-                                                },
-                                              ),
-                                              IconButton(
-                                                icon: Icon(Icons.share),
-                                                onPressed: () {
-                                                  final cardDetails =
-                                                      buildCardDetails(item);
-                                                  _shareCardDetails(cardDetails);
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      onExpansionChanged: (expanded) {
-                                        setState(() {
-                                          isExpandedList[index] = expanded;
-                                        });
-                                      },
-                                      initiallyExpanded: isExpanded,
-                                    ),
-                                    Positioned(
-                                      bottom: 4.0,
-                                      right: 4.0,
-                                      child: Text(
-                                        '${itemDistance?.toStringAsFixed(2)} kms',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 16,
-                                        ),
+                                        ],
                                       ),
                                     ),
                                   ],
+                                  onExpansionChanged: (expanded) {
+                                    // Handle expansion changes if needed
+                                  },
+                                  initiallyExpanded: isExpandedList[index],
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    );
+                                Positioned(
+                                  bottom: 4.0,
+                                  right: 4.0,
+                                  child: Text(
+                                    '${calculateDistance(
+                                      latitude,
+                                      longitude,
+                                      item['officeLatitude'] as double?,
+                                      item['officeLongitude'] as double?,
+                                    ).toStringAsFixed(2)} kms',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
                   }
                 },
               ),
@@ -504,4 +505,9 @@ class _DonorListScreenState extends State<DonorListScreen> {
       ),
     );
   }
+}
+
+double? parseDouble(String? value) {
+  if (value == null) return null;
+  return double.tryParse(value);
 }
