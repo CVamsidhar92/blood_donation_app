@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:blood_donation/screens/donor_list.dart';
+import 'package:blood_donation/screens/edit_profile.dart';
 import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'base_url.dart';
@@ -21,7 +22,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final myVersion = '1.2';
   late BuildContext dialogContext;
-  late String selectedBloodGroup ='A+';
+  late String selectedBloodGroup = 'A+';
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   List<String> bloodGroups = [
@@ -270,7 +271,8 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => DonorListScreen(
-                                bloodGroup: selectedBloodGroup,mobileNo: widget.mobileNo)),
+                                bloodGroup: selectedBloodGroup,
+                                mobileNo: widget.mobileNo)),
                       );
                     } else {
                       // Show a snackbar if form validation fails
@@ -292,7 +294,28 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 100),
+            SizedBox(height: 10),
+            SizedBox(
+              height: 45,
+              child: FractionallySizedBox(
+                  widthFactor: 0.5,
+                  child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => EditProfile( mobileNo: widget.mobileNo)));
+                      },
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Color.fromARGB(255, 11, 9, 25)),
+                      ),
+                      child: Text(
+                        'Edit Profile',
+                        style: TextStyle(fontSize: 20),
+                      ))),
+            ),
+            const SizedBox(height: 80),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

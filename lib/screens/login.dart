@@ -1,5 +1,8 @@
 import 'package:blood_donation/screens/base_url.dart';
+import 'package:blood_donation/screens/donor_register.dart';
 import 'package:blood_donation/screens/home_page.dart';
+import 'package:blood_donation/screens/otp_screen.dart';
+import 'package:blood_donation/screens/reset_pwd.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -17,7 +20,7 @@ class _LoginState extends State<Login> {
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordObscureText = true;
   bool _rememberMe = false;
-
+  String name = '';
   @override
   void initState() {
     super.initState();
@@ -77,6 +80,7 @@ class _LoginState extends State<Login> {
       final Map<String, dynamic> responseData = json.decode(response.body);
       final String id = responseData['id'].toString();
       final String name = responseData['name'].toString();
+      final String mobileNo = responseData['mobile_no'].toString();
 
       navigateToHomePage(mobileNo);
 
@@ -105,6 +109,29 @@ class _LoginState extends State<Login> {
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  Future<int> fetchLoginCount() async {
+    final String apiUrl =
+        base_url + 'registerCount'; // Replace with your actual API URL
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, parse the count
+        final Map<String, dynamic> data = json.decode(response.body);
+        return data['count'];
+      } else {
+        // If the server did not return a 200 OK response,
+        // throw an exception.
+        throw Exception('Failed to load login count');
+      }
+    } catch (e) {
+      // Handle any exceptions that might occur during the HTTP request
+      print('Error fetching login count: $e');
+      throw Exception('Failed to load login count');
+    }
   }
 
   @override
@@ -171,7 +198,6 @@ class _LoginState extends State<Login> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: screenSize.height * 0.02),
-
               TextFormField(
                 controller: _mobileController,
                 keyboardType: TextInputType.number,
@@ -190,7 +216,6 @@ class _LoginState extends State<Login> {
                 },
               ),
               SizedBox(height: screenSize.height * 0.02),
-
               TextFormField(
                 controller: _passwordController,
                 obscureText: _passwordObscureText,
@@ -201,8 +226,7 @@ class _LoginState extends State<Login> {
                   suffixIcon: GestureDetector(
                     onTap: () {
                       setState(() {
-                        _passwordObscureText =
-                            !_passwordObscureText;
+                        _passwordObscureText = !_passwordObscureText;
                       });
                     },
                     child: Icon(
@@ -214,7 +238,6 @@ class _LoginState extends State<Login> {
                   ),
                 ),
               ),
-
               CheckboxListTile(
                 contentPadding: EdgeInsets.all(0),
                 title: Text('Remember Me'),
@@ -226,10 +249,17 @@ class _LoginState extends State<Login> {
                   });
                 },
               ),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  ElevatedButton(
+                    onPressed: _login,
+                    child: Text(
+                      'Login',
+                      style: TextStyle(fontSize: screenSize.width * 0.05),
+                    ),
+                  ),
+                  SizedBox(width: screenSize.width * 0.02),
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/Register');
@@ -239,15 +269,41 @@ class _LoginState extends State<Login> {
                       style: TextStyle(fontSize: screenSize.width * 0.05),
                     ),
                   ),
-                  SizedBox(width: screenSize.width * 0.02),
-                  ElevatedButton(
-                    onPressed: _login,
-                    child: Text(
-                      'Login',
-                      style: TextStyle(fontSize: screenSize.width * 0.05),
-                    ),
-                  ),
                 ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Center(
+                child: GestureDetector(
+                  onTap: () async {
+                    final mobileNo = _mobileController.text;
+                    final password = _passwordController.text;
+
+                    // Validate if mobileNo and password are not empty
+                    if (mobileNo.isEmpty || password.isEmpty) {
+                      _showErrorSnackBar(
+                          'Please enter both mobile no and password.');
+                      return;
+                    }
+
+                    // Navigate to the OTP screen with the entered values
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ResetPwd(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Reset Password',
+                    style: TextStyle(
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
             ],
           ),
