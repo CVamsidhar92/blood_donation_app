@@ -22,12 +22,14 @@ class _LoginState extends State<Login> {
   bool _rememberMe = false;
   String name = '';
   int? _count;
+ int? _cachedLoginCount;
+  Future<int>? _loginCountFuture;
   @override
   void initState() {
     super.initState();
     // Check if the user is already logged in here
     checkIfUserIsLoggedIn();
-     fetchLoginCount();
+   _loginCountFuture = fetchLoginCount();
   }
 
   Future<void> checkIfUserIsLoggedIn() async {
@@ -112,18 +114,13 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Future<void> fetchLoginCount() async {
-    try {
-      int count = await fetchLoginCountFromApi();
-      setState(() {
-        _count = count;
-      });
-    } catch (e) {
-      print('Error fetching login count: $e');
-    }
+
+Future<int> fetchLoginCount() async {
+  // If the count is already cached, return it
+  if (_cachedLoginCount != null) {
+    return _cachedLoginCount!;
   }
 
-Future<int> fetchLoginCountFromApi() async {
   final String apiUrl = base_url + 'fetchLoginCount';
 
   try {
@@ -131,7 +128,12 @@ Future<int> fetchLoginCountFromApi() async {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
-      return data['count'];
+      final int count = data['count'];
+
+      // Cache the count for future use
+      _cachedLoginCount = count;
+
+      return count;
     } else {
       print('Error response status code: ${response.statusCode}');
       print('Error response body: ${response.body}');
@@ -288,16 +290,6 @@ Future<int> fetchLoginCountFromApi() async {
               Center(
                 child: GestureDetector(
                   onTap: () async {
-                    final mobileNo = _mobileController.text;
-                    final password = _passwordController.text;
-
-                    // Validate if mobileNo and password are not empty
-                    if (mobileNo.isEmpty || password.isEmpty) {
-                      _showErrorSnackBar(
-                          'Please enter both mobile no and password.');
-                      return;
-                    }
-
                     // Navigate to the OTP screen with the entered values
                     await Navigator.push(
                       context,
@@ -318,44 +310,46 @@ Future<int> fetchLoginCountFromApi() async {
                 
               ),
               SizedBox(height: 20,),
-            FutureBuilder<int>(
-  future: fetchLoginCountFromApi(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-          ),
-        ),
-      );
-    } else if (snapshot.hasError) {
-      return Center(
-        child: Text(
-          'Error loading login count',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.red, // You can customize the color
-          ),
-        ),
-      );
-    } else {
-      _count = snapshot.data;
-      return Center(
-        child: Text(
-          'Registered Users - ' + (_count?.toString() ?? ''),
-          style: TextStyle(
-            fontSize: 18, // Adjust the font size as needed
-            fontWeight: FontWeight.bold, // You can customize the font weight
-            color: Colors.red
-          ),
-        ),
-      );
-    }
-  },
-),
+          // Usage of FutureBuilder with caching
+ // Usage of FutureBuilder with caching
+    FutureBuilder<int>(
+      future: _loginCountFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading login count',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+              ),
+            ),
+          );
+        } else {
+          _count = snapshot.data;
+          return Center(
+            child: Text(
+              'Registered Users - ' + (_count?.toString() ?? ''),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          );
+        }
+      },
+    )
 
             ],
           ),

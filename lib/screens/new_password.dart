@@ -73,7 +73,13 @@ class _NewPasswordState extends State<NewPassword> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
+              Image.asset(
+                      'assets/images/reset-pwd.png', // Replace with the path to your image
+                      height: 150, // Adjust the height as needed
+                    ),
+                    SizedBox(height: 20,),
                TextFormField(
                 controller: _newPasswordController,
                 obscureText: _passwordObscureText,

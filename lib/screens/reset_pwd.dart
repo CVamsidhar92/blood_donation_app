@@ -143,130 +143,139 @@ Future<void> verifyOtp(String mobileNumber, String otp) async {
         title: const Text('Reset Password'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Please Enter Your Mobile Number',
-              style: TextStyle(
-                color: Color.fromARGB(255, 33, 184, 243),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            TextFormField(
-              controller: _mobileController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [LengthLimitingTextInputFormatter(10)],
-              readOnly:
-                  isRegistered, // Make read-only when OTP text field is visible
-              decoration: InputDecoration(
-                hintText: 'Enter your mobile number',
-                labelText: 'Mobile Number',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Mobile number is required';
-                } else if (value!.length != 10) {
-                  return 'Mobile number must be exactly 10 digits';
-                }
-                return null;
-              },
-            ),
-            if (isRegistered)
-              Column(
-                children: [
-                  const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _otpController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [LengthLimitingTextInputFormatter(6)],
-                    decoration: InputDecoration(
-                      hintText: 'Enter OTP',
-                      labelText: 'OTP',
-                      border: OutlineInputBorder(),
+        padding: const EdgeInsets.only(top: 50,left: 22,right: 22),
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Image.asset(
+                      'assets/images/reset-pwd.png', // Replace with the path to your image
+                      height: 150, // Adjust the height as needed
                     ),
-                    validator: (value) {
-                      // Add OTP validation logic if needed
-                      return null;
-                    },
-                  ),
-                ],
-              ),
-            const SizedBox(height: 16.0),
-             if (!isRegistered)
-            Center(
-              child: SizedBox(
-                width: 120,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_mobileController.text.length == 10 &&
-                        !isResetClicked) {
-                      sendMobileNumber(_mobileController.text);
-                    } else if (_mobileController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Please Enter Your Mobile Number'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } else if (_mobileController.text.length == 10 &&
-                        isResetClicked) {
-                      // Add verification logic here
-                      // You can check the OTP and perform the necessary actions
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Mobile number must be exactly 10 digits.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                  child: Text( 'Send OTP',
-                    style: TextStyle(fontSize: 16.0),
+                    SizedBox(height: 20,),
+              Center(
+                child: Text(
+                  'Please Enter Your Mobile Number',
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 33, 184, 243),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              TextFormField(
+                controller: _mobileController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [LengthLimitingTextInputFormatter(10)],
+                readOnly:
+                    isRegistered, // Make read-only when OTP text field is visible
+                decoration: InputDecoration(
+                  hintText: 'Enter your mobile number',
+                  labelText: 'Mobile Number',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value?.isEmpty ?? true) {
+                    return 'Mobile number is required';
+                  } else if (value!.length != 10) {
+                    return 'Mobile number must be exactly 10 digits';
+                  }
+                  return null;
+                },
+              ),
+              if (isRegistered)
+                Column(
+                  children: [
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _otpController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [LengthLimitingTextInputFormatter(6)],
+                      decoration: InputDecoration(
+                        hintText: 'Enter OTP',
+                        labelText: 'OTP',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        // Add OTP validation logic if needed
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 16.0),
+               if (!isRegistered)
+              Center(
+                child: SizedBox(
+                  width: 120,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_mobileController.text.length == 10 &&
+                          !isResetClicked) {
+                        sendMobileNumber(_mobileController.text);
+                      } else if (_mobileController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Please Enter Your Mobile Number'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } else if (_mobileController.text.length == 10 &&
+                          isResetClicked) {
+                        // Add verification logic here
+                        // You can check the OTP and perform the necessary actions
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                Text('Mobile number must be exactly 10 digits.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    child: Text( 'Send OTP',
+                      style: TextStyle(fontSize: 16.0),
+                    ),
+                  ),
+                  
+                ),
+              ),
+             if (isRegistered)
+          Center(
+            child: SizedBox(
+              width: 120,
+              child: ElevatedButton(
+          onPressed: () {
+            if (_otpController.text.isNotEmpty) {
+              verifyOtp(
+                _mobileController.text,
+                _otpController.text
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Please enter the OTP.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: Text(
+            'Verify OTP',
+            style: TextStyle(fontSize: 16.0),
+          ),
               ),
             ),
-           if (isRegistered)
-  Center(
-    child: SizedBox(
-      width: 120,
-      child: ElevatedButton(
-        onPressed: () {
-          if (_otpController.text.isNotEmpty) {
-            verifyOtp(
-              _mobileController.text,
-              _otpController.text
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Please enter the OTP.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: Text(
-          'Verify OTP',
-          style: TextStyle(fontSize: 16.0),
-        ),
-      ),
-    ),
-  ),
-
-          ],
-              
-
+          ),
+        
+            ],
+                
+        
+          ),
         ),
       ),
     );

@@ -55,7 +55,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   children: [
                     Image.asset(
                       'assets/images/otpicon.png', // Replace with the path to your image
-                      height: 100, // Adjust the height as needed
+                      height: 150, // Adjust the height as needed
                     ),
                     SizedBox(height: 20),
                     Center(
