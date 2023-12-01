@@ -34,10 +34,10 @@ class _RegisterState extends State<Register> {
   String state1 = '';
   String mobileNumber = '';
   String country1 = 'India';
-  var officeLatitude = 0.0;
-  var officeLongitude = 0.0;
-  var residentialLatitude = 0.0;
-  var residentialLongitude = 0.0;
+  double? officeLatitude;
+  double? officeLongitude;
+  double? residentialLatitude;
+  double? residentialLongitude;
   bool isRegistered = false;
   bool areInputFieldsEnabled = true; // Add this variable
   String password = '';
@@ -53,14 +53,6 @@ class _RegisterState extends State<Register> {
     'AB-',
     'O+',
     'O-',
-    'A1+',
-    'A1-',
-    'A2+',
-    'A2-',
-    'A1B+',
-    'A1B-',
-    'A2B+',
-    'A2B-'
   ];
   TextEditingController officeLatitudeController = TextEditingController();
   TextEditingController officeLongitudeController = TextEditingController();
@@ -73,7 +65,7 @@ class _RegisterState extends State<Register> {
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
     final apiKey =
-        'API_KEY'; // Replace with your API key
+        'AIzaSyAC2MG5XPZdHjahoQCi8mZawbB3VHbrfC0'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
@@ -156,10 +148,25 @@ class _RegisterState extends State<Register> {
   // Call API Start
   void registerDonor() async {
     // Call the function to fetch latitude and longitude
-    getAddressCoordinates();
+   await getAddressCoordinates();
+  await getAddressCoordinates1();
 
     if (!_formKey.currentState!.validate()) {
       // Form validation failed, do not proceed with the API call
+      return;
+    }
+
+    // Check if any of the location coordinates is null
+    if (!(officeLatitude != null &&
+        officeLongitude != null &&
+        residentialLatitude != null &&
+        residentialLongitude != null)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text('Ensure the address entered is accurate.'),
+    backgroundColor: Colors.red, // Set the background color to red
+  ),
+);
       return;
     }
 
@@ -382,11 +389,19 @@ class _RegisterState extends State<Register> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Office Address*',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Center(
+                        child: const Text(
+                          'Office Address*',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Text(
+                          '(Kindly ensure the address is provided accurately)',
+                          style: TextStyle(fontSize: 15, color: Colors.red),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -396,9 +411,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                              
                                 setState(() {
                                   officeStreet = value;
                                 });
+                                  getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
@@ -417,9 +434,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                          
                                 setState(() {
                                   officeArea = value;
                                 });
+                                      getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Area/Locality*',
@@ -442,9 +461,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                               
                                 setState(() {
                                   officeCity = value;
                                 });
+                                 getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'City*',
@@ -463,9 +484,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                               
                                 setState(() {
                                   officeDistrict = value;
                                 });
+                                 getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'District*',
@@ -488,9 +511,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                            
                                 setState(() {
                                   officeState = value;
                                 });
+                                    getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'State*',
@@ -518,6 +543,9 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'Pincode*',
                               ),
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(6)
+                              ],
                               //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officePincode.isEmpty) {
@@ -543,48 +571,6 @@ class _RegisterState extends State<Register> {
                             text: 'India'), // Set default value
                         enabled: false, // Disable the text field
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Office Latitude*',
-                              ),
-                              controller: officeLatitudeController,
-                              enabled: false,
-                              validator: (value) {
-                                // Add your validation logic here
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter correct address.';
-                                }
-                                // You can add more validation checks as needed
-                                return null; // Return null if the input is valid
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Office Longitude*',
-                              ),
-                              controller: officeLongitudeController,
-                              enabled: false,
-                              validator: (value) {
-                                // Add your validation logic here
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter correct address.';
-                                }
-                                // You can add more validation checks as needed
-                                return null; // Return null if the input is valid
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -598,11 +584,19 @@ class _RegisterState extends State<Register> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Residential Address*',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Center(
+                        child: const Text(
+                          'Residential Address*',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Text(
+                          '(Kindly ensure the address is provided accurately)',
+                          style: TextStyle(fontSize: 15, color: Colors.red),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -612,9 +606,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                               
                                 setState(() {
                                   street1 = value;
                                 });
+                                 getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
@@ -633,9 +629,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                              
                                 setState(() {
                                   area1 = value;
                                 });
+                                  getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Area/Locality*',
@@ -658,9 +656,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                             
                                 setState(() {
                                   city1 = value;
                                 });
+                                   getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'City*',
@@ -679,9 +679,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                               
                                 setState(() {
                                   district1 = value;
                                 });
+                                 getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'District*',
@@ -704,9 +706,11 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
+                               
                                 setState(() {
                                   state1 = value;
                                 });
+                                 getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'State*',
@@ -734,6 +738,9 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'Pincode*',
                               ),
+                              inputFormatters: [
+                                LengthLimitingTextInputFormatter(6)
+                              ],
                               //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (pincode1.isEmpty) {
@@ -759,47 +766,7 @@ class _RegisterState extends State<Register> {
                             text: 'India'), // Set default value
                         enabled: false, // Disable the text field
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Residential Latitude*',
-                              ),
-                              controller: residentialLatitudeController,
-                              enabled: false,
-                              validator: (value) {
-                                // Add your validation logic here
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter correct address.';
-                                }
-                                // You can add more validation checks as needed
-                                return null; // Return null if the input is valid
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 5,
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Residential Longitude*',
-                              ),
-                              controller: residentialLongitudeController,
-                              enabled: false,
-                              validator: (value) {
-                                // Add your validation logic here
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter correct address.';
-                                }
-                                // You can add more validation checks as needed
-                                return null; // Return null if the input is valid
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                   
                     ],
                   ),
                 ),
@@ -814,6 +781,7 @@ class _RegisterState extends State<Register> {
                   decoration: InputDecoration(
                     labelText: 'Mobile Number*',
                   ),
+                  inputFormatters: [LengthLimitingTextInputFormatter(10)],
                   //  enabled: areInputFieldsEnabled,
                   validator: (value) {
                     if (mobileNumber.isEmpty) {

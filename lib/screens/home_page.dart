@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   String mobileNo;
-
   HomePage({Key? key, required this.mobileNo}) : super(key: key);
 
   @override
@@ -34,14 +33,6 @@ class _HomePageState extends State<HomePage> {
     'AB-',
     'O+',
     'O-',
-    'A1+',
-    'A1-',
-    'A2+',
-    'A2-',
-    'A1B+',
-    'A1B-',
-    'A2B+',
-    'A2B-'
   ];
 
   @override
@@ -304,7 +295,8 @@ class _HomePageState extends State<HomePage> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => EditProfile( mobileNo: widget.mobileNo)));
+                                builder: (context) =>
+                                    EditProfile(mobileNo: widget.mobileNo)));
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(

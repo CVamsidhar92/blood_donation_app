@@ -63,21 +63,27 @@ class _ResetPwdState extends State<ResetPwd> {
     });
   }
 
-  Future<bool> checkUserExistence() async {
-    Uri checkUrl = Uri.parse(base_url + 'resetCheckUser');
-    http.Response checkResponse = await http.post(checkUrl, body: {
-      'mobileNumber': _mobileController.text,
-    });
+Future<bool> checkUserExistence() async {
+  Uri checkUrl = Uri.parse(base_url + 'resetCheckUser');
+  http.Response checkResponse = await http.post(checkUrl, body: {
+    'mobileNumber': _mobileController.text,
+  });
 
-    if (checkResponse.statusCode == 200 && checkResponse.body.isNotEmpty) {
-      Map<String, dynamic> responseData = json.decode(checkResponse.body);
-      String status = responseData['status'];
-      return status ==
-          '200'; // Check if the status is '200' to indicate user exists
+  if (checkResponse.statusCode == 200 && checkResponse.body.isNotEmpty) {
+    Map<String, dynamic> responseData = json.decode(checkResponse.body);
+    String status = responseData['status'];
+    if (status == '200') {
+      return true;
     } else {
+      // Handle the case where the user is not found in the login table
+    
       return false;
     }
+  } else {
+    return false;
   }
+}
+
 
 Future<void> verifyOtp(String mobileNumber, String otp) async {
   final String apiUrl = base_url + 'resetVerifyOTP';

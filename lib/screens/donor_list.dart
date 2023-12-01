@@ -316,32 +316,35 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
             ),
           ),
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchData(double.parse(selectedDistance.replaceAll('kms', ''))),
-             builder: (context, snapshot) {
-  if (snapshot.connectionState == ConnectionState.waiting) {
-    return const Center(child: CircularProgressIndicator());
-  } else if (snapshot.hasError) {
-    return Center(
-      child: Text(
-        'Error fetching data: ${snapshot.error}',
-        style: TextStyle(color: Colors.red),
-      ),
-    );
-  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-    return Center(
-      child: Text(
-        'No Donors Found within the specified distance.',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey, // Adjust color as needed
-        ),
-      ),
-    );
-  } else {
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: fetchData(double.parse(selectedDistance.replaceAll('kms', ''))),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  // Display a loading indicator while waiting for data
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  // Display an error message if an error occurred
+                  return Center(
+                    child: Text(
+                      'Error fetching data: ${snapshot.error}',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  // Display a message when there is no data
+                  return Center(
+                    child: Text(
+                      'No Donors Found within the specified distance.',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  );
+                } else {
                     final data = snapshot.data!;
                  final filteredData = selectedDistance == '5kms' || selectedDistance == '10kms'
     ? data
@@ -381,9 +384,9 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
                         ),
                       );
                     } else {
-                      return ListView.builder(
-  itemCount: filteredData.length,
-  itemBuilder: (context, index) {
+                       return ListView.builder(
+                    itemCount: filteredData.length,
+                    itemBuilder: (context, index) {
     print('Building card for item at index $index');
     final item = filteredData[index];
     print('Item: $item');

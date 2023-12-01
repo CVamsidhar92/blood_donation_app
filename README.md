@@ -19,3 +19,5 @@ flutter build web
 
 //To build the apk
 flutter build apk
+(or)
+flutter build apk --no-tree-shake-icons

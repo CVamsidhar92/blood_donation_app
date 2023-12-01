@@ -21,11 +21,13 @@ class _LoginState extends State<Login> {
   bool _passwordObscureText = true;
   bool _rememberMe = false;
   String name = '';
+  int? _count;
   @override
   void initState() {
     super.initState();
     // Check if the user is already logged in here
     checkIfUserIsLoggedIn();
+     fetchLoginCount();
   }
 
   Future<void> checkIfUserIsLoggedIn() async {
@@ -78,7 +80,6 @@ class _LoginState extends State<Login> {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
-      final String id = responseData['id'].toString();
       final String name = responseData['name'].toString();
       final String mobileNo = responseData['mobile_no'].toString();
 
@@ -98,7 +99,7 @@ class _LoginState extends State<Login> {
         _passwordController.text = '';
       }
     } else {
-      _showErrorSnackBar('An error occurred. Please try again later.');
+      _showErrorSnackBar('The login credentials are wrong.Please check.');
     }
   }
 
@@ -111,28 +112,38 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Future<int> fetchLoginCount() async {
-    final String apiUrl =
-        base_url + 'registerCount'; // Replace with your actual API URL
-
+  Future<void> fetchLoginCount() async {
     try {
-      final response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode == 200) {
-        // If the server returns a 200 OK response, parse the count
-        final Map<String, dynamic> data = json.decode(response.body);
-        return data['count'];
-      } else {
-        // If the server did not return a 200 OK response,
-        // throw an exception.
-        throw Exception('Failed to load login count');
-      }
+      int count = await fetchLoginCountFromApi();
+      setState(() {
+        _count = count;
+      });
     } catch (e) {
-      // Handle any exceptions that might occur during the HTTP request
       print('Error fetching login count: $e');
-      throw Exception('Failed to load login count');
     }
   }
+
+Future<int> fetchLoginCountFromApi() async {
+  final String apiUrl = base_url + 'fetchLoginCount';
+
+  try {
+    final response = await http.post(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return data['count'];
+    } else {
+      print('Error response status code: ${response.statusCode}');
+      print('Error response body: ${response.body}');
+      throw Exception('Failed to load login count');
+    }
+  } catch (e) {
+    print('Error fetching login count: $e');
+    throw Exception('Failed to load login count');
+  }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +315,48 @@ class _LoginState extends State<Login> {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
+                
               ),
+              SizedBox(height: 20,),
+            FutureBuilder<int>(
+  future: fetchLoginCountFromApi(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    } else if (snapshot.hasError) {
+      return Center(
+        child: Text(
+          'Error loading login count',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.red, // You can customize the color
+          ),
+        ),
+      );
+    } else {
+      _count = snapshot.data;
+      return Center(
+        child: Text(
+          'Registered Users - ' + (_count?.toString() ?? ''),
+          style: TextStyle(
+            fontSize: 18, // Adjust the font size as needed
+            fontWeight: FontWeight.bold, // You can customize the font weight
+            color: Colors.red
+          ),
+        ),
+      );
+    }
+  },
+),
+
             ],
           ),
         ),
