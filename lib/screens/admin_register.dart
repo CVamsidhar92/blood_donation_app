@@ -1,19 +1,22 @@
 import 'package:blood_donation/screens/base_url.dart';
+import 'package:blood_donation/screens/login.dart';
 import 'package:blood_donation/screens/otp_screen.dart';
+import 'package:blood_donation/screens/users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
-class Register extends StatefulWidget {
-  const Register({Key? key}) : super(key: key);
+class AdminRegister extends StatefulWidget {
+  String role;
+  AdminRegister({Key? key, required this.role}) : super(key: key);
 
   @override
-  _RegisterState createState() => _RegisterState();
+  _AdminRegisterState createState() => _AdminRegisterState();
 }
 
-class _RegisterState extends State<Register> {
+class _AdminRegisterState extends State<AdminRegister> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   String name = '';
@@ -148,8 +151,8 @@ class _RegisterState extends State<Register> {
   // Call API Start
   void registerDonor() async {
     // Call the function to fetch latitude and longitude
-   await getAddressCoordinates();
-  await getAddressCoordinates1();
+    await getAddressCoordinates();
+    await getAddressCoordinates1();
 
     if (!_formKey.currentState!.validate()) {
       // Form validation failed, do not proceed with the API call
@@ -161,12 +164,12 @@ class _RegisterState extends State<Register> {
         officeLongitude != null &&
         residentialLatitude != null &&
         residentialLongitude != null)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    content: Text('Ensure the address entered is accurate.'),
-    backgroundColor: Colors.red, // Set the background color to red
-  ),
-);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ensure the address entered is accurate.'),
+          backgroundColor: Colors.red, // Set the background color to red
+        ),
+      );
       return;
     }
 
@@ -212,7 +215,7 @@ class _RegisterState extends State<Register> {
     String jsonData = jsonEncode(formData);
 
     // Make a POST request to the API endpoint
-    Uri url = Uri.parse(base_url + 'register');
+    Uri url = Uri.parse(base_url + 'adminRegister');
     http.post(url,
         body: jsonData,
         headers: {'Content-Type': 'application/json'}).then((response) {
@@ -235,8 +238,7 @@ class _RegisterState extends State<Register> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            OtpScreen(mobile: mobileNumber, name: name, password: password),
+        builder: (context) => UsersList(role:widget.role),
       ),
     );
   }
@@ -268,6 +270,37 @@ class _RegisterState extends State<Register> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('Blood Donor Registration'),
+            actions: <Widget>[
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) =>
+                      Login(), // Replace with the actual login screen widget
+                ));
+              },
+              child: Row(
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(
+                      Icons.logout_outlined,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(right: 20.0),
+                    child: Text(
+                      'Logout',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -411,11 +444,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                              
                                 setState(() {
                                   officeStreet = value;
                                 });
-                                  getAddressCoordinates();
+                                getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
@@ -434,11 +466,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                          
                                 setState(() {
                                   officeArea = value;
                                 });
-                                      getAddressCoordinates();
+                                getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Area/Locality*',
@@ -461,11 +492,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                               
                                 setState(() {
                                   officeCity = value;
                                 });
-                                 getAddressCoordinates();
+                                getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'City*',
@@ -484,11 +514,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                               
                                 setState(() {
                                   officeDistrict = value;
                                 });
-                                 getAddressCoordinates();
+                                getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'District*',
@@ -511,11 +540,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                            
                                 setState(() {
                                   officeState = value;
                                 });
-                                    getAddressCoordinates();
+                                getAddressCoordinates();
                               },
                               decoration: InputDecoration(
                                 labelText: 'State*',
@@ -606,11 +634,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                               
                                 setState(() {
                                   street1 = value;
                                 });
-                                 getAddressCoordinates1();
+                                getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
@@ -629,11 +656,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                              
                                 setState(() {
                                   area1 = value;
                                 });
-                                  getAddressCoordinates1();
+                                getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'Area/Locality*',
@@ -656,11 +682,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                             
                                 setState(() {
                                   city1 = value;
                                 });
-                                   getAddressCoordinates1();
+                                getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'City*',
@@ -679,11 +704,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                               
                                 setState(() {
                                   district1 = value;
                                 });
-                                 getAddressCoordinates1();
+                                getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'District*',
@@ -706,11 +730,10 @@ class _RegisterState extends State<Register> {
                             flex: 5,
                             child: TextFormField(
                               onChanged: (value) {
-                               
                                 setState(() {
                                   state1 = value;
                                 });
-                                 getAddressCoordinates1();
+                                getAddressCoordinates1();
                               },
                               decoration: InputDecoration(
                                 labelText: 'State*',
@@ -766,7 +789,6 @@ class _RegisterState extends State<Register> {
                             text: 'India'), // Set default value
                         enabled: false, // Disable the text field
                       ),
-                   
                     ],
                   ),
                 ),

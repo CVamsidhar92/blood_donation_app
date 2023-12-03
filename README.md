@@ -21,3 +21,9 @@ flutter build web
 flutter build apk
 (or)
 flutter build apk --no-tree-shake-icons
+
+//To Create a Project
+flutter create <project_name>
+
+//APK Location
+<project_name>/build/app/outputs/apk/release/app-release.apk

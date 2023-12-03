@@ -1,14 +1,14 @@
 import 'package:blood_donation/screens/base_url.dart';
 import 'package:blood_donation/screens/home_page.dart';
+import 'package:blood_donation/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class OtpScreen extends StatefulWidget {
- final String name;
+  final String name;
   final String password;
   final String mobile;
   const OtpScreen(
@@ -25,7 +25,6 @@ class OtpScreen extends StatefulWidget {
 class _OtpScreenState extends State<OtpScreen> {
   final _formKey = GlobalKey<FormState>();
   String otp = '';
- 
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +113,8 @@ class _OtpScreenState extends State<OtpScreen> {
       ),
     );
   }
-   void _onVerifyButtonPressed() async {
+
+  void _onVerifyButtonPressed() async {
     if (otp.isEmpty) {
       // Show a red SnackBar for empty OTP input field
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,8 +130,8 @@ class _OtpScreenState extends State<OtpScreen> {
     }
 
     if (_formKey.currentState!.validate()) {
-   bool otpVerified = await verifyOtp(widget.name, widget.password, widget.mobile, otp);
-
+      bool otpVerified =
+          await verifyOtp(widget.name, widget.password, widget.mobile, otp);
 
       if (otpVerified) {
         // Set a flag in shared preferences to indicate OTP verification
@@ -141,7 +141,7 @@ class _OtpScreenState extends State<OtpScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomePage(mobileNo: widget.mobile),
+            builder: (context) => Login(),
           ),
         );
       } else {
@@ -153,44 +153,44 @@ class _OtpScreenState extends State<OtpScreen> {
       }
     }
   }
- Future<bool> verifyOtp(
-  String name, String password, String mobileNumber, String otp) async {
-  final String apiUrl = base_url + 'verifyOtp';
 
-  final Map<String, dynamic> data = {
-    'mobileNo': mobileNumber,
-    'otp': otp,
-    'name': name,
-    'password': password,
-  };
+  Future<bool> verifyOtp(
+      String name, String password, String mobileNumber, String otp) async {
+    final String apiUrl = base_url + 'verifyOtp';
 
-  try {
-    final http.Response response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
+    final Map<String, dynamic> data = {
+      'mobileNo': mobileNumber,
+      'otp': otp,
+      'name': name,
+      'password': password,
+    };
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final List<dynamic>? dataList = responseData['data'];
+    try {
+      final http.Response response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
 
-      if (dataList != null && dataList.isNotEmpty) {
-        final Map<String, dynamic> userData = dataList[0];
-        final String receivedOtp = userData['otp'];
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final List<dynamic>? dataList = responseData['data'];
 
-        return receivedOtp == otp;
+        if (dataList != null && dataList.isNotEmpty) {
+          final Map<String, dynamic> userData = dataList[0];
+          final String receivedOtp = userData['otp'];
+
+          return receivedOtp == otp;
+        } else {
+          return false;
+        }
       } else {
+        print('Error response body: ${response.body}');
         return false;
       }
-    } else {
-      print('Error response body: ${response.body}');
+    } catch (e) {
+      print('Error verifying OTP: $e');
       return false;
     }
-  } catch (e) {
-    print('Error verifying OTP: $e');
-    return false;
   }
-}
-
 }

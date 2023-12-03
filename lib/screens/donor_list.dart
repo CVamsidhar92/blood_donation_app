@@ -12,12 +12,14 @@ import 'base_url.dart';
 class DonorListScreen extends StatefulWidget {
   final String bloodGroup;
   final String mobileNo;
+  final String role;
 
-  DonorListScreen({
-    Key? key,
-    required this.bloodGroup,
-    required this.mobileNo,
-  }) : super(key: key);
+  DonorListScreen(
+      {Key? key,
+      required this.bloodGroup,
+      required this.mobileNo,
+      required this.role})
+      : super(key: key);
 
   @override
   _DonorListScreenState createState() => _DonorListScreenState();
@@ -47,19 +49,17 @@ class _DonorListScreenState extends State<DonorListScreen> {
     selectedDistance = matchingEntry.key;
   }
 
- @override
-void initState() {
-  super.initState();
-  requestLocationPermissionAndGetCurrentLocation();
-  print(widget.bloodGroup);
-}
+  @override
+  void initState() {
+    super.initState();
+    requestLocationPermissionAndGetCurrentLocation();
+    getCurrentLocation();
+    print(widget.bloodGroup);
+  }
 
   double calculateDistance(
-    double? lat1, double? lon1, double? lat2, double? lon2) {
-    if (lat1 == null ||
-        lon1 == null ||
-        lat2 == null ||
-        lon2 == null) {
+      double? lat1, double? lon1, double? lat2, double? lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
       // Handle cases where latitude or longitude is null
       return double.infinity; // Or any other appropriate value
     }
@@ -88,8 +88,10 @@ void initState() {
     if (status.isGranted) {
       final position = await getCurrentLocation();
       setState(() {
-        latitude = position?.latitude;
-        longitude = position?.longitude;
+        if (mounted) {
+          latitude = position?.latitude;
+          longitude = position?.longitude;
+        }
       });
 
       if (latitude != null && longitude != null) {
@@ -115,81 +117,85 @@ void initState() {
     }
   }
 
-Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
-  final url = base_url + 'donor_list1';
-  final body = {
-    'bloodGroup': widget.bloodGroup,
-  };
+  Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
+    final url = base_url + 'donor_list1';
+    final body = {
+      'bloodGroup': widget.bloodGroup,
+    };
 
-  try {
-    final response = await http.post(Uri.parse(url), body: body);
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
-      if (jsonData is List) {
-        final data = List<Map<String, dynamic>>.from(jsonData);
+    try {
+      final response = await http.post(Uri.parse(url), body: body);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData is List) {
+          final data = List<Map<String, dynamic>>.from(jsonData);
 
-        // Ensure latitude and longitude are part of the data
-        data.forEach((item) {
-          item['officeLatitude'] = parseDouble(item['office_latitude'] as String?);
-          item['officeLongitude'] = parseDouble(item['office_longitude'] as String?);
-          item['residentialLatitude'] = parseDouble(item['residential_latitude'] as String?);
-          item['residentialLongitude'] = parseDouble(item['residential_longitude'] as String?);
-        });
+          // Ensure latitude and longitude are part of the data
+          data.forEach((item) {
+            item['officeLatitude'] =
+                parseDouble(item['office_latitude'] as String?);
+            item['officeLongitude'] =
+                parseDouble(item['office_longitude'] as String?);
+            item['residentialLatitude'] =
+                parseDouble(item['residential_latitude'] as String?);
+            item['residentialLongitude'] =
+                parseDouble(item['residential_longitude'] as String?);
+          });
 
-        // Filter data based on selected distance
-      final filteredData = data.where((item) {
-  final officeLat = item['officeLatitude'] as double?;
-  final officeLon = item['officeLongitude'] as double?;
-  final resLat = item['residentialLatitude'] as double?;
-  final resLon = item['residentialLongitude'] as double?;
+          // Filter data based on selected distance
+          final filteredData = data.where((item) {
+            final officeLat = item['officeLatitude'] as double?;
+            final officeLon = item['officeLongitude'] as double?;
+            final resLat = item['residentialLatitude'] as double?;
+            final resLon = item['residentialLongitude'] as double?;
 
-  if (officeLat != null &&
-      officeLon != null &&
-      resLat != null &&
-      resLon != null &&
-      latitude != null &&
-      longitude != null) {
-    final officeDistance = calculateDistance(latitude!, longitude!, officeLat, officeLon);
-    final resDistance = calculateDistance(latitude!, longitude!, resLat, resLon);
+            if (officeLat != null &&
+                officeLon != null &&
+                resLat != null &&
+                resLon != null &&
+                latitude != null &&
+                longitude != null) {
+              final officeDistance = calculateDistance(
+                  latitude!, longitude!, officeLat, officeLon);
+              final resDistance =
+                  calculateDistance(latitude!, longitude!, resLat, resLon);
 
-    // Check if the donor is within the selected distance (5kms or 10kms)
-    return officeDistance <= 10.0 || resDistance <= 10.0;
-  } else {
-    return false;
-  }
-}).toList();
+              // Check if the donor is within the selected distance (5kms or 10kms)
+              return officeDistance <= 10.0 || resDistance <= 10.0;
+            } else {
+              return false;
+            }
+          }).toList();
 
-
-        isExpandedList = List<bool>.filled(filteredData.length, false);
-        return filteredData;
+          isExpandedList = List<bool>.filled(filteredData.length, false);
+          return filteredData;
+        } else {
+          throw Exception('Invalid data format received from API');
+        }
       } else {
-        throw Exception('Invalid data format received from API');
+        throw Exception(
+            'Failed to fetch data from API: ${response.statusCode}');
       }
-    } else {
-      throw Exception('Failed to fetch data from API: ${response.statusCode}');
+    } catch (error) {
+      print('Error fetching data from API: $error');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to fetch data from API: $error'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return [];
     }
-  } catch (error) {
-    print('Error fetching data from API: $error');
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text('Failed to fetch data from API: $error'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-    return [];
   }
-}
-
-
 
   void _launchPhoneCall(String? phoneNumber) async {
     if (phoneNumber != null) {
@@ -246,43 +252,41 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Donors List'),
-        actions: <Widget>[
-          InkWell(
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (context) =>
-                    Login(), // Replace with the actual login screen widget
-              ));
-            },
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: Icon(
-                    Icons.logout_outlined,
-                    color: Colors.white,
+        appBar: AppBar(
+          title: const Text('Donors List'),
+          actions: <Widget>[
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) =>
+                      Login(), // Replace with the actual login screen widget
+                ));
+              },
+              child: Row(
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(
+                      Icons.logout_outlined,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(right: 20.0),
-                  child: Text(
-                    'Logout',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18),
+                  Padding(
+                    padding: EdgeInsets.only(right: 20.0),
+                    child: Text(
+                      'Logout',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          ],
+        ),
+        body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -316,91 +320,92 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
             ),
           ),
           Expanded(
-          child: Container(
+              child: Container(
             padding: const EdgeInsets.all(16.0),
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: fetchData(double.parse(selectedDistance.replaceAll('kms', ''))),
+              future: fetchData(
+                  double.parse(selectedDistance.replaceAll('kms', ''))),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   // Display a loading indicator while waiting for data
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  // Display an error message if an error occurred
-                  return Center(
-                    child: Text(
-                      'Error fetching data: ${snapshot.error}',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  // Display a message when there is no data
-                  return Center(
-                    child: Text(
-                      'No Donors Found within the specified distance.',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                } else if (snapshot.connectionState == ConnectionState.done) {
+                  if (snapshot.hasError) {
+                    // Display an error message if an error occurred
+                    return Center(
+                      child: Text(
+                        'Error fetching data: ${snapshot.error}',
+                        style: TextStyle(color: Colors.red),
                       ),
-                    ),
-                  );
-                } else {
+                    );
+                  } else {
                     final data = snapshot.data!;
-                 final filteredData = selectedDistance == '5kms' || selectedDistance == '10kms'
-    ? data
-    : data.where((item) {
-        final officeLat = item['officeLatitude'] as double?;
-        final officeLon = item['officeLongitude'] as double?;
-        final resLat = item['residentialLatitude'] as double?;
-        final resLon = item['residentialLongitude'] as double?;
+                    final filteredData = selectedDistance == '5kms' ||
+                            selectedDistance == '10kms'
+                        ? data
+                        : data.where((item) {
+                            final officeLat = item['officeLatitude'] as double?;
+                            final officeLon =
+                                item['officeLongitude'] as double?;
+                            final resLat =
+                                item['residentialLatitude'] as double?;
+                            final resLon =
+                                item['residentialLongitude'] as double?;
 
-        if (officeLat != null &&
-            officeLon != null &&
-            resLat != null &&
-            resLon != null &&
-            latitude != null &&
-            longitude != null) {
-          final officeDistance =
-              calculateDistance(latitude!, longitude!, officeLat, officeLon);
-          final resDistance =
-              calculateDistance(latitude!, longitude!, resLat, resLon);
+                            if (officeLat != null &&
+                                officeLon != null &&
+                                resLat != null &&
+                                resLon != null &&
+                                latitude != null &&
+                                longitude != null) {
+                              final officeDistance = calculateDistance(
+                                  latitude!, longitude!, officeLat, officeLon);
+                              final resDistance = calculateDistance(
+                                  latitude!, longitude!, resLat, resLon);
 
-          final maxDistance = double.parse(selectedDistance.replaceAll('kms', ''));
-          return officeDistance <= maxDistance || resDistance <= maxDistance;
-        } else {
-          return false;
-        }
-      }).toList();
+                              final maxDistance = double.parse(
+                                  selectedDistance.replaceAll('kms', ''));
+                              return officeDistance <= maxDistance ||
+                                  resDistance <= maxDistance;
+                            } else {
+                              return false;
+                            }
+                          }).toList();
 
+                    isExpandedList =
+                        List<bool>.filled(filteredData.length, false);
 
                     if (filteredData.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
                           'No Donors Found within the specified distance.',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: Colors.grey,
                           ),
                         ),
                       );
                     } else {
-                       return ListView.builder(
-                    itemCount: filteredData.length,
-                    itemBuilder: (context, index) {
-    print('Building card for item at index $index');
-    final item = filteredData[index];
-    print('Item: $item');
-      // Check if the widget's mobile number is the same as the item's mobile number
-    if (widget.mobileNo == item['mobile_no']) {
-      // Do not display the card
-      return SizedBox.shrink(); // This will create an empty, non-visible widget
-    }
+                      return ListView.builder(
+                        itemCount: filteredData.length,
+                        itemBuilder: (context, index) {
+                          print('Building card for item at index $index');
+                          final item = filteredData[index];
+                          print('Item: $item');
+                          // Check if the widget's mobile number is the same as the item's mobile number
+                          if (widget.mobileNo == item['mobile_no']) {
+                            // Do not display the card
+                            return SizedBox
+                                .shrink(); // This will create an empty, non-visible widget
+                          }
                           return Card(
                             child: Stack(
                               children: [
                                 ExpansionTile(
                                   title: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Name: ${item['name'] ?? ''}',
@@ -432,7 +437,8 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
                                         ),
                                       ),
                                       subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const SizedBox(height: 8),
                                           Text(
@@ -458,13 +464,15 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
                                           IconButton(
                                             icon: Icon(Icons.call),
                                             onPressed: () {
-                                              _launchPhoneCall(item['mobile_no'] as String?);
+                                              _launchPhoneCall(
+                                                  item['mobile_no'] as String?);
                                             },
                                           ),
                                           IconButton(
                                             icon: Icon(Icons.share),
                                             onPressed: () {
-                                              final cardDetails = buildCardDetails(item);
+                                              final cardDetails =
+                                                  buildCardDetails(item);
                                               _shareCardDetails(cardDetails);
                                             },
                                           ),
@@ -500,13 +508,14 @@ Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
                       );
                     }
                   }
-                },
-              ),
+                } else {
+                  // Handle other connection states if needed
+                  return const SizedBox.shrink(); // or another widget
+                }
+              },
             ),
-          ),
-        ],
-      ),
-    );
+          ))
+        ]));
   }
 }
 

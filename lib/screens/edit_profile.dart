@@ -12,7 +12,8 @@ import 'package:crypto/crypto.dart';
 
 class EditProfile extends StatefulWidget {
   final String mobileNo;
-  const EditProfile({Key? key, required this.mobileNo}) : super(key: key);
+  final String role;
+  const EditProfile({Key? key, required this.mobileNo,required this.role}) : super(key: key);
 
   @override
   State<EditProfile> createState() => _EditProfileState();
@@ -47,7 +48,7 @@ class _EditProfileState extends State<EditProfile> {
   bool areInputFieldsEnabled = true; // Add this variable
   String password = '';
   String confirmPassword = '';
-   bool isLoading = true;
+  bool isLoading = true;
 
   List<String> bloodGroups = [
     'A+',
@@ -100,7 +101,7 @@ class _EditProfileState extends State<EditProfile> {
   }
 
   // Call this function to get latitude and longitude for both addresses
- Future<void> getAddressCoordinates() async {
+  Future<void> getAddressCoordinates() async {
     try {
       var officeLatLng = await getLatLngFromAddress(
         officeStreet,
@@ -155,81 +156,80 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
- Future<void> fetchData() async {
-  try {
-    // Prepare the data to be sent in the request body
-    final requestData = {
-      'mobileNo': widget.mobileNo,
-      // Add other necessary parameters
-    };
+  Future<void> fetchData() async {
+    try {
+      // Prepare the data to be sent in the request body
+      final requestData = {
+        'mobileNo': widget.mobileNo,
+        // Add other necessary parameters
+      };
 
-    // Make an HTTP POST request to your API endpoint
-    final response = await http.post(
-      Uri.parse(base_url + 'getProfile'),
-      body: json.encode(requestData),
-      headers: {'Content-Type': 'application/json'},
-    );
+      // Make an HTTP POST request to your API endpoint
+      final response = await http.post(
+        Uri.parse(base_url + 'getProfile'),
+        body: json.encode(requestData),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    if (response.statusCode == 200) {
-      // Parse the response body (assuming it's JSON)
-      final dynamic responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        // Parse the response body (assuming it's JSON)
+        final dynamic responseData = json.decode(response.body);
 
-      if (responseData is List && responseData.isNotEmpty) {
-        final firstObject = responseData[0];
+        if (responseData is List && responseData.isNotEmpty) {
+          final firstObject = responseData[0];
 
-        if (firstObject is Map<String, dynamic>) {
-          if (firstObject.containsKey('mobile_no')) {
-            setState(() {
-              name = firstObject['name'];
-              selectedBloodGroup = firstObject['blood_group'];
-              designation = firstObject['desig'];
-              officeStreet = firstObject['office_street'];
-              officeArea = firstObject['office_area'];
-              officeCity = firstObject['office_city'];
-              officeDistrict = firstObject['office_district'];
-              officeState = firstObject['office_state'];
-              officePincode = firstObject['office_pincode'];
-              street1 = firstObject['residential_street'];
-              area1 = firstObject['residential_area'];
-              city1 = firstObject['residential_city'];
-              district1 = firstObject['residential_district'];
-              state1 = firstObject['residential_state'];
-              pincode1 = firstObject['residential_pincode'];
-              mobileNumber = firstObject['mobile_no'];
-            });
+          if (firstObject is Map<String, dynamic>) {
+            if (firstObject.containsKey('mobile_no')) {
+              setState(() {
+                name = firstObject['name'];
+                selectedBloodGroup = firstObject['blood_group'];
+                designation = firstObject['desig'];
+                officeStreet = firstObject['office_street'];
+                officeArea = firstObject['office_area'];
+                officeCity = firstObject['office_city'];
+                officeDistrict = firstObject['office_district'];
+                officeState = firstObject['office_state'];
+                officePincode = firstObject['office_pincode'];
+                street1 = firstObject['residential_street'];
+                area1 = firstObject['residential_area'];
+                city1 = firstObject['residential_city'];
+                district1 = firstObject['residential_district'];
+                state1 = firstObject['residential_state'];
+                pincode1 = firstObject['residential_pincode'];
+                mobileNumber = firstObject['mobile_no'];
+              });
 
-            // Fetch coordinates for both addresses
-            await getAddressCoordinates();
-            await getAddressCoordinates1();
+              // Fetch coordinates for both addresses
+              await getAddressCoordinates();
+              await getAddressCoordinates1();
+            } else {
+              print('Invalid response format: Missing expected fields.');
+              print('Response Body: $firstObject');
+            }
           } else {
-            print('Invalid response format: Missing expected fields.');
+            print('Invalid response format: Not a Map.');
             print('Response Body: $firstObject');
           }
         } else {
-          print('Invalid response format: Not a Map.');
-          print('Response Body: $firstObject');
+          print('Invalid response format: Empty list or not a list.');
+          print('Response Body: $responseData');
         }
       } else {
-        print('Invalid response format: Empty list or not a list.');
-        print('Response Body: $responseData');
+        // Handle errors if the request was not successful
+        print('Failed to fetch user data: ${response.statusCode}');
+        print('Response Body: ${response.body}');
       }
-    } else {
-      // Handle errors if the request was not successful
-      print('Failed to fetch user data: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle exceptions
+      print('Error fetching user data: $e');
+      setState(() {
+        isLoading = false;
+      });
     }
-    setState(() {
-      isLoading = false;
-    });
-  } catch (e) {
-    // Handle exceptions
-    print('Error fetching user data: $e');
-    setState(() {
-      isLoading = false;
-    });
   }
-}
-
 
   void editProfile() async {
     if (!_formKey.currentState!.validate()) {
@@ -250,8 +250,8 @@ class _EditProfileState extends State<EditProfile> {
       );
       return;
     }
-    
-     Map<String, dynamic> formData = {
+
+    Map<String, dynamic> formData = {
       'name': name,
       'bloodGroup': selectedBloodGroup,
       'designation': designation,
@@ -276,7 +276,7 @@ class _EditProfileState extends State<EditProfile> {
       'residentialLongitude': residentialLongitude,
     };
 
- // Convert the form data to JSON
+    // Convert the form data to JSON
     String jsonData = jsonEncode(formData);
 
     // Make a POST request to the API endpoint
@@ -288,28 +288,27 @@ class _EditProfileState extends State<EditProfile> {
         // Data successfully sent to the API
         print('Data updated successfully');
         print('Response: ${response.body}');
-       // Show a success Snackbar
-     ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    content: Text('Updated successfully'),
-    duration: Duration(seconds: 2),
-    backgroundColor: Colors.green, // Set the background color to green
-  ),
-);
-
-
-      // Navigate to the home page after a delay (optional)
-      Future.delayed(Duration(seconds: 2), () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(mobileNo: mobileNumber),
+        // Show a success Snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Updated successfully'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green, // Set the background color to green
           ),
         );
-      });
-    } else {
-      // Error sending data to the API
-      print('Error sending data');
+
+        // Navigate to the home page after a delay (optional)
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(mobileNo: mobileNumber, role:widget.role),
+            ),
+          );
+        });
+      } else {
+        // Error sending data to the API
+        print('Error sending data');
       }
     });
   }
@@ -319,7 +318,7 @@ class _EditProfileState extends State<EditProfile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
-         actions: <Widget>[
+        actions: <Widget>[
           InkWell(
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -351,7 +350,7 @@ class _EditProfileState extends State<EditProfile> {
           ),
         ],
       ),
-     body: Stack(
+      body: Stack(
         children: [
           if (!isLoading) // Show the UI only if data is not loading
             SingleChildScrollView(
@@ -508,7 +507,7 @@ class _EditProfileState extends State<EditProfile> {
                                       setState(() {
                                         officeStreet = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Street/Road*',
@@ -533,7 +532,7 @@ class _EditProfileState extends State<EditProfile> {
                                       setState(() {
                                         officeArea = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Area/Locality*',
@@ -559,11 +558,10 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                    
                                       setState(() {
                                         officeCity = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'City*',
@@ -585,11 +583,10 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                    
                                       setState(() {
                                         officeDistrict = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'District*',
@@ -615,11 +612,10 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                    
                                       setState(() {
                                         officeState = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'State*',
@@ -642,16 +638,17 @@ class _EditProfileState extends State<EditProfile> {
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
                                     onChanged: (value) {
-                                     
                                       setState(() {
                                         officePincode = value;
                                       });
-                                        getAddressCoordinates();
+                                      getAddressCoordinates();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Pincode*',
                                     ),
-                                     inputFormatters: [LengthLimitingTextInputFormatter(6)],
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(6)
+                                    ],
                                     initialValue: officePincode,
                                     enabled: areInputFieldsEnabled,
                                     validator: (value) {
@@ -716,17 +713,16 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                     
                                       setState(() {
                                         street1 = value;
                                       });
-                                        getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Street/Road*',
                                     ),
                                     initialValue: street1,
-                                     enabled: areInputFieldsEnabled,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (street1.isEmpty) {
                                         return 'Street/Road is required';
@@ -740,17 +736,16 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                     
                                       setState(() {
                                         area1 = value;
                                       });
-                                        getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Area/Locality*',
                                     ),
                                     initialValue: area1,
-                                     enabled: areInputFieldsEnabled,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (area1.isEmpty) {
                                         return 'Area/Locality is required';
@@ -768,17 +763,16 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                     
                                       setState(() {
                                         city1 = value;
                                       });
-                                        getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'City*',
                                     ),
-                                    initialValue:city1 ,
-                                     enabled: areInputFieldsEnabled,
+                                    initialValue: city1,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (city1.isEmpty) {
                                         return 'City is required';
@@ -792,17 +786,16 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                   
                                       setState(() {
                                         district1 = value;
                                       });
-                                          getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'District*',
                                     ),
                                     initialValue: district1,
-                                     enabled: areInputFieldsEnabled,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (district1.isEmpty) {
                                         return 'District is required';
@@ -820,17 +813,16 @@ class _EditProfileState extends State<EditProfile> {
                                   flex: 5,
                                   child: TextFormField(
                                     onChanged: (value) {
-                                     
                                       setState(() {
                                         state1 = value;
                                       });
-                                        getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'State*',
                                     ),
                                     initialValue: state1,
-                                     enabled: areInputFieldsEnabled,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (state1.isEmpty) {
                                         return 'State is required';
@@ -845,18 +837,19 @@ class _EditProfileState extends State<EditProfile> {
                                   child: TextFormField(
                                     keyboardType: TextInputType.number,
                                     onChanged: (value) {
-                                   getAddressCoordinates1();
+                                      getAddressCoordinates1();
                                       setState(() {
                                         pincode1 = value;
                                       });
-                                         
                                     },
                                     decoration: InputDecoration(
                                       labelText: 'Pincode*',
                                     ),
-                                     inputFormatters: [LengthLimitingTextInputFormatter(6)],
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(6)
+                                    ],
                                     initialValue: pincode1,
-                                     enabled: areInputFieldsEnabled,
+                                    enabled: areInputFieldsEnabled,
                                     validator: (value) {
                                       if (pincode1.isEmpty) {
                                         return 'Pincode is required';
@@ -895,7 +888,6 @@ class _EditProfileState extends State<EditProfile> {
                         decoration: InputDecoration(
                           labelText: 'Mobile Number*',
                         ),
-                        
                         initialValue: mobileNumber,
                         enabled: false,
                         validator: (value) {
@@ -905,31 +897,31 @@ class _EditProfileState extends State<EditProfile> {
                           return null;
                         },
                       ),
-                     SizedBox(height: 20),
-                     Center(
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.center, // Center the buttons
-    children: [
-      ElevatedButton(
-        onPressed: editProfile,
-        child: const Text('Update'),
-      ),
-      SizedBox(width: 5),
-     ElevatedButton(
-  onPressed: () {
-    Navigator.pop(context); // Navigate back when the button is pressed
-  },
-  style: ElevatedButton.styleFrom(
-    primary: Colors.red, // Set the background color to red
-  ),
-  child: const Text('Close'),
-)
-
-    ],
-  ),
-),
-
-                      
+                      SizedBox(height: 20),
+                      Center(
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // Center the buttons
+                          children: [
+                            ElevatedButton(
+                              onPressed: editProfile,
+                              child: const Text('Update'),
+                            ),
+                            SizedBox(width: 5),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                    context); // Navigate back when the button is pressed
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: Colors
+                                    .red, // Set the background color to red
+                              ),
+                              child: const Text('Close'),
+                            )
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),

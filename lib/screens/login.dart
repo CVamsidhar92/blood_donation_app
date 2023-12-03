@@ -1,12 +1,12 @@
+import 'package:blood_donation/screens/admin_login.dart';
 import 'package:blood_donation/screens/base_url.dart';
-import 'package:blood_donation/screens/donor_register.dart';
 import 'package:blood_donation/screens/home_page.dart';
-import 'package:blood_donation/screens/otp_screen.dart';
 import 'package:blood_donation/screens/reset_pwd.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -22,14 +22,14 @@ class _LoginState extends State<Login> {
   bool _rememberMe = false;
   String name = '';
   int? _count;
- int? _cachedLoginCount;
+  int? _cachedLoginCount;
   Future<int>? _loginCountFuture;
   @override
   void initState() {
     super.initState();
     // Check if the user is already logged in here
     checkIfUserIsLoggedIn();
-   _loginCountFuture = fetchLoginCount();
+    _loginCountFuture = fetchLoginCount();
   }
 
   Future<void> checkIfUserIsLoggedIn() async {
@@ -38,8 +38,8 @@ class _LoginState extends State<Login> {
     final bool rememberMe = prefs.getBool('rememberMe') ?? false;
 
     if (rememberMe) {
-      final String mobileNo = prefs.getString('mobile_no') ?? '';
-      final String password = prefs.getString('password') ?? '';
+      final String mobileNo = prefs.getString('userMobileNo') ?? '';
+      final String password = prefs.getString('userPassword') ?? '';
 
       setState(() {
         _rememberMe = true;
@@ -49,11 +49,11 @@ class _LoginState extends State<Login> {
     }
   }
 
-  void navigateToHomePage(String mobileNo) {
+  void navigateToHomePage(String mobileNo, String role) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => HomePage(mobileNo: mobileNo),
+        builder: (context) => HomePage(mobileNo: mobileNo, role: role),
       ),
     );
   }
@@ -84,19 +84,20 @@ class _LoginState extends State<Login> {
       final Map<String, dynamic> responseData = json.decode(response.body);
       final String name = responseData['name'].toString();
       final String mobileNo = responseData['mobile_no'].toString();
+      final String role = responseData['role'].toString();
 
-      navigateToHomePage(mobileNo);
+      navigateToHomePage(mobileNo, role);
 
       if (_rememberMe) {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('mobile_no', mobileNo);
-        prefs.setString('password', password);
-        prefs.setBool('rememberMe', true);
+        prefs.setString('userMobileNo', mobileNo);
+        prefs.setString('userPassword', password);
+        prefs.setBool('rememberUser', true);
       } else {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.remove('mobile_no');
-        prefs.remove('password');
-        prefs.setBool('rememberMe', false);
+        prefs.remove('userMobileNo');
+        prefs.remove('userPassword');
+        prefs.setBool('rememberUser', false);
         _mobileController.text = '';
         _passwordController.text = '';
       }
@@ -114,38 +115,35 @@ class _LoginState extends State<Login> {
     );
   }
 
+  Future<int> fetchLoginCount() async {
+    // If the count is already cached, return it
+    if (_cachedLoginCount != null) {
+      return _cachedLoginCount!;
+    }
 
-Future<int> fetchLoginCount() async {
-  // If the count is already cached, return it
-  if (_cachedLoginCount != null) {
-    return _cachedLoginCount!;
-  }
+    final String apiUrl = base_url + 'fetchLoginCount';
 
-  final String apiUrl = base_url + 'fetchLoginCount';
+    try {
+      final response = await http.post(Uri.parse(apiUrl));
 
-  try {
-    final response = await http.post(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final int count = data['count'];
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      final int count = data['count'];
+        // Cache the count for future use
+        _cachedLoginCount = count;
 
-      // Cache the count for future use
-      _cachedLoginCount = count;
-
-      return count;
-    } else {
-      print('Error response status code: ${response.statusCode}');
-      print('Error response body: ${response.body}');
+        return count;
+      } else {
+        print('Error response status code: ${response.statusCode}');
+        print('Error response body: ${response.body}');
+        throw Exception('Failed to load login count');
+      }
+    } catch (e) {
+      print('Error fetching login count: $e');
       throw Exception('Failed to load login count');
     }
-  } catch (e) {
-    print('Error fetching login count: $e');
-    throw Exception('Failed to load login count');
   }
-}
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +153,37 @@ Future<int> fetchLoginCount() async {
       appBar: AppBar(
         title: Text('Login'),
         automaticallyImplyLeading: false,
+        actions: <Widget>[
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) =>
+                    Admin(), // Replace with the actual login screen widget
+              ));
+            },
+            child: Row(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(right: 8.0),
+                  child: Icon(
+                    Icons.manage_accounts,
+                    color: Colors.white,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: 20.0),
+                  child: Text(
+                    'Admin',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -213,6 +242,7 @@ Future<int> fetchLoginCount() async {
               SizedBox(height: screenSize.height * 0.02),
               TextFormField(
                 controller: _mobileController,
+                inputFormatters: [LengthLimitingTextInputFormatter(10)],
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Please Enter Your Mobile Number',
@@ -307,50 +337,50 @@ Future<int> fetchLoginCount() async {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-                
               ),
-              SizedBox(height: 20,),
-          // Usage of FutureBuilder with caching
- // Usage of FutureBuilder with caching
-    FutureBuilder<int>(
-      future: _loginCountFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
+              SizedBox(
+                height: 20,
               ),
-            ),
-          );
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error loading login count',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.red,
-              ),
-            ),
-          );
-        } else {
-          _count = snapshot.data;
-          return Center(
-            child: Text(
-              'Registered Users - ' + (_count?.toString() ?? ''),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-          );
-        }
-      },
-    )
-
+              // Usage of FutureBuilder with caching
+              // Usage of FutureBuilder with caching
+              FutureBuilder<int>(
+                future: _loginCountFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading login count',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  } else {
+                    _count = snapshot.data;
+                    return Center(
+                      child: Text(
+                        'Registered Users - ' + (_count?.toString() ?? ''),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              )
             ],
           ),
         ),

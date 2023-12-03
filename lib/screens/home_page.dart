@@ -3,6 +3,7 @@
 import 'package:blood_donation/screens/donor_list.dart';
 import 'package:blood_donation/screens/edit_profile.dart';
 import 'package:blood_donation/screens/login.dart';
+import 'package:blood_donation/screens/users_list.dart';
 import 'package:flutter/material.dart';
 import 'base_url.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +13,9 @@ import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   String mobileNo;
-  HomePage({Key? key, required this.mobileNo}) : super(key: key);
+  String role;
+  HomePage({Key? key, required this.mobileNo, required this.role})
+      : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,8 +26,10 @@ class _HomePageState extends State<HomePage> {
   late BuildContext dialogContext;
   late String selectedBloodGroup = 'A+';
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<String> bloodGroups = [
+    '-Select-',
     'A+',
     'A-',
     'B+',
@@ -38,7 +43,9 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    selectedBloodGroup = '-Select-';
     getUpdates();
+    print(widget.role);
   }
 
   Future<void> getUpdates() async {
@@ -179,7 +186,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 20),
-            const SizedBox(height: 15),
             const Text(
               'BLOOD DONOR FINDER',
               style: TextStyle(
@@ -239,7 +245,15 @@ class _HomePageState extends State<HomePage> {
                       dropdownColor: Colors.white,
                       isExpanded: false,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null ||
+                            value.isEmpty ||
+                            value == '-Select-') {
+                          // Show a snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please select a blood group'),
+                            ),
+                          );
                           return 'Please select a blood group';
                         }
                         return null;
@@ -256,17 +270,26 @@ class _HomePageState extends State<HomePage> {
                 widthFactor: 0.5,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
+                    if (selectedBloodGroup == '-Select-') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please select a blood group'),
+                        ),
+                      );
+                    } else if (_formKey.currentState?.validate() ?? false) {
                       // Proceed with the button action
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => DonorListScreen(
-                                bloodGroup: selectedBloodGroup,
-                                mobileNo: widget.mobileNo)),
+                          builder: (context) => DonorListScreen(
+                            bloodGroup: selectedBloodGroup,
+                            mobileNo: widget.mobileNo,
+                            role: widget
+                                .role, // Use a default value if widget.role is null
+                          ),
+                        ),
                       );
                     } else {
-                      // Show a snackbar if form validation fails
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Please select a blood group'),
@@ -286,27 +309,51 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SizedBox(height: 10),
-            SizedBox(
-              height: 45,
-              child: FractionallySizedBox(
-                  widthFactor: 0.5,
-                  child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    EditProfile(mobileNo: widget.mobileNo)));
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                            Color.fromARGB(255, 11, 9, 25)),
-                      ),
-                      child: Text(
-                        'Edit Profile',
-                        style: TextStyle(fontSize: 20),
-                      ))),
-            ),
+            if (widget.role != '0')
+              SizedBox(
+                height: 45,
+                child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EditProfile(
+                                      mobileNo: widget.mobileNo,
+                                      role: widget.role)));
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              Color.fromARGB(255, 11, 9, 25)),
+                        ),
+                        child: Text(
+                          'Edit Profile',
+                          style: TextStyle(fontSize: 20),
+                        ))),
+              ),
+
+               if (widget.role == '0')
+              SizedBox(
+                height: 45,
+                child: FractionallySizedBox(
+                    widthFactor: 0.5,
+                    child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => UsersList(role:widget.role)));
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              Color.fromARGB(255, 11, 9, 25)),
+                        ),
+                        child: Text(
+                          'Add User',
+                          style: TextStyle(fontSize: 20),
+                        ))),
+              ),
             const SizedBox(height: 80),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

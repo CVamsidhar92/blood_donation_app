@@ -12,10 +12,10 @@ class _SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
-    navigateToSelectStn();
+    navigateToLogin();
   }
 
-  void navigateToSelectStn() {
+  void navigateToLogin() {
     Timer(Duration(seconds: 3), () {
       Navigator.pushReplacementNamed(context,
           '/Login'); // Updated route name to match the defined route
