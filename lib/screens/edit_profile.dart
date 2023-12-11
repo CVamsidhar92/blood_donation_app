@@ -6,22 +6,26 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:pointycastle/pointycastle.dart' as pointy;
-import 'dart:math';
-import 'package:crypto/crypto.dart';
+
+// Define the Edit Profile widget
 
 class EditProfile extends StatefulWidget {
+    // Declare variables for user mobile number and role
   final String mobileNo;
   final String role;
+    // Constructor to initialize the variables
   const EditProfile({Key? key, required this.mobileNo,required this.role}) : super(key: key);
 
+  // Create the state for the Edit Profile page
   @override
   State<EditProfile> createState() => _EditProfileState();
 }
 
+// Define the state for the Edit Profile Page
 class _EditProfileState extends State<EditProfile> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+    // Declare variables and keys
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String name = '';
   String selectedBloodGroup = '';
   String designation = '';
@@ -50,6 +54,7 @@ class _EditProfileState extends State<EditProfile> {
   String confirmPassword = '';
   bool isLoading = true;
 
+  // List of blood groups
   List<String> bloodGroups = [
     'A+',
     'A-',
@@ -60,12 +65,15 @@ class _EditProfileState extends State<EditProfile> {
     'O+',
     'O-',
   ];
+
+  //Editing Controllers for office latitude, Longitude and Residential Latitude and longitude
   TextEditingController officeLatitudeController = TextEditingController();
   TextEditingController officeLongitudeController = TextEditingController();
   TextEditingController residentialLatitudeController = TextEditingController();
-  TextEditingController residentialLongitudeController =
-      TextEditingController();
+  TextEditingController residentialLongitudeController = TextEditingController();
 
+
+  // Initialize the state
   @override
   void initState() {
     super.initState();
@@ -100,7 +108,7 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  // Call this function to get latitude and longitude for both addresses
+  // Call this function to get latitude and longitude for Office addresses
   Future<void> getAddressCoordinates() async {
     try {
       var officeLatLng = await getLatLngFromAddress(
@@ -129,6 +137,7 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+  // Call this function to get latitude and longitude for Residential addresses
   Future<void> getAddressCoordinates1() async {
     try {
       var residentialLatLng = await getLatLngFromAddress(
@@ -156,6 +165,7 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+//To fetch the profile data 
   Future<void> fetchData() async {
     try {
       // Prepare the data to be sent in the request body
@@ -317,13 +327,18 @@ class _EditProfileState extends State<EditProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Edit Profile',
+         style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
+        backgroundColor: Colors.blue,
         actions: <Widget>[
           InkWell(
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
                 builder: (context) =>
-                    Login(), // Replace with the actual login screen widget
+                    Login(), 
               ));
             },
             child: Row(
@@ -352,7 +367,7 @@ class _EditProfileState extends State<EditProfile> {
       ),
       body: Stack(
         children: [
-          if (!isLoading) // Show the UI only if data is not loading
+          if (!isLoading) 
             SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -397,7 +412,7 @@ class _EditProfileState extends State<EditProfile> {
                               textFieldConfiguration: TextFieldConfiguration(
                                 controller: TextEditingController(
                                     text:
-                                        selectedBloodGroup), // Set the controller
+                                        selectedBloodGroup),
                                 decoration: InputDecoration(
                                   labelText: 'Select Blood Group',
                                 ),
@@ -418,7 +433,6 @@ class _EditProfileState extends State<EditProfile> {
                                   selectedBloodGroup = suggestion!;
                                 });
                               },
-                              // enabled:areInputFieldsEnabled,
 
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -441,7 +455,7 @@ class _EditProfileState extends State<EditProfile> {
                           labelText: 'Name*',
                         ),
                         initialValue: name,
-                        enabled: areInputFieldsEnabled, // Add this line
+                        enabled: areInputFieldsEnabled, 
                         validator: (value) {
                           if (name.isEmpty) {
                             return 'Name is required';
@@ -460,9 +474,7 @@ class _EditProfileState extends State<EditProfile> {
                           labelText: 'Designation*',
                         ),
                         initialValue: designation,
-                        enabled: areInputFieldsEnabled, // Add this line
-
-                        // enabled: areInputFieldsEnabled,
+                        enabled: areInputFieldsEnabled, 
                         validator: (value) {
                           if (designation.isEmpty) {
                             return 'Designation is required';
@@ -514,8 +526,7 @@ class _EditProfileState extends State<EditProfile> {
                                     ),
                                     initialValue: officeStreet,
                                     enabled:
-                                        areInputFieldsEnabled, // Add this line
-                                    //  enabled: areInputFieldsEnabled,
+                                        areInputFieldsEnabled,
                                     validator: (value) {
                                       if (officeStreet.isEmpty) {
                                         return 'Street/Road is required';
@@ -539,8 +550,7 @@ class _EditProfileState extends State<EditProfile> {
                                     ),
                                     initialValue: officeArea,
                                     enabled:
-                                        areInputFieldsEnabled, // Add this line
-                                    // enabled: areInputFieldsEnabled,
+                                        areInputFieldsEnabled,
                                     validator: (value) {
                                       if (officeArea.isEmpty) {
                                         return 'Area/Locality is required';
@@ -905,6 +915,12 @@ class _EditProfileState extends State<EditProfile> {
                           children: [
                             ElevatedButton(
                               onPressed: editProfile,
+                                style: 
+                              ElevatedButton.styleFrom(
+                              
+                                primary: Colors.blue,
+                                onPrimary: Colors.white,  // Set the background color to red
+                              ),
                               child: const Text('Update'),
                             ),
                             SizedBox(width: 5),
@@ -913,9 +929,11 @@ class _EditProfileState extends State<EditProfile> {
                                 Navigator.pop(
                                     context); // Navigate back when the button is pressed
                               },
-                              style: ElevatedButton.styleFrom(
-                                primary: Colors
-                                    .red, // Set the background color to red
+                              style: 
+                              ElevatedButton.styleFrom(
+                              
+                                primary: Colors.red,
+                                onPrimary: Colors.white,  // Set the background color to red
                               ),
                               child: const Text('Close'),
                             )

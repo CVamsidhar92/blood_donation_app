@@ -1,6 +1,5 @@
 import 'package:blood_donation/screens/base_url.dart';
 import 'package:blood_donation/screens/login.dart';
-import 'package:blood_donation/screens/otp_screen.dart';
 import 'package:blood_donation/screens/users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -8,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
+// Define the AdminRegister class
+// ignore: must_be_immutable
 class AdminRegister extends StatefulWidget {
   String role;
   AdminRegister({Key? key, required this.role}) : super(key: key);
@@ -16,9 +17,11 @@ class AdminRegister extends StatefulWidget {
   _AdminRegisterState createState() => _AdminRegisterState();
 }
 
+// Define the state for the AdminRegister class
 class _AdminRegisterState extends State<AdminRegister> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+// Variable to store user name
   String name = '';
   String selectedBloodGroup = '';
   String designation = '';
@@ -47,6 +50,7 @@ class _AdminRegisterState extends State<AdminRegister> {
   String confirmPassword = '';
   bool _passwordObscureText = true;
 
+  // List the bloodfroups in list
   List<String> bloodGroups = [
     'A+',
     'A-',
@@ -57,18 +61,19 @@ class _AdminRegisterState extends State<AdminRegister> {
     'O+',
     'O-',
   ];
+
+  //Text Editing Controllers to handle the latitude and longitude text input fields
   TextEditingController officeLatitudeController = TextEditingController();
   TextEditingController officeLongitudeController = TextEditingController();
   TextEditingController residentialLatitudeController = TextEditingController();
-  TextEditingController residentialLongitudeController =
-      TextEditingController();
+  TextEditingController residentialLongitudeController = TextEditingController();
   String otp = '';
 
   // Function to fetch latitude and longitude from address
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
     final apiKey =
-        'API_KEY'; // Replace with your API key
+        'AIzaSyAC2MG5XPZdHjahoQCi8mZawbB3VHbrfC0'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
@@ -149,6 +154,8 @@ class _AdminRegisterState extends State<AdminRegister> {
   }
 
   // Call API Start
+
+  // Storing data into database using POST method
   void registerDonor() async {
     // Call the function to fetch latitude and longitude
     await getAddressCoordinates();
@@ -173,8 +180,10 @@ class _AdminRegisterState extends State<AdminRegister> {
       return;
     }
 
+    //checking of mobile number is existing or not. 
     bool isUserExists = await checkUserExistence();
 
+    //If alraedy mobile number is there then snackbar will appear
     if (isUserExists) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -183,7 +192,6 @@ class _AdminRegisterState extends State<AdminRegister> {
       );
       return;
     }
-    // Rest of your code for API call goes here...
     // Create a map to hold the form data
     Map<String, dynamic> formData = {
       'name': name,
@@ -269,7 +277,11 @@ class _AdminRegisterState extends State<AdminRegister> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('Blood Donor Registration'),
+        title: const Text('Blood Donor Registration',
+         style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
             actions: <Widget>[
             InkWell(
               onTap: () {
@@ -867,6 +879,12 @@ class _AdminRegisterState extends State<AdminRegister> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: registerDonor,
+                    style: 
+                              ElevatedButton.styleFrom(
+                              
+                                primary: Colors.blue,
+                                onPrimary: Colors.white,  // Set the background color to red
+                              ),
                   child: const Text('Register'),
                 )
               ],

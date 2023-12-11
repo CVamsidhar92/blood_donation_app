@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'base_url.dart';
 
+// Define the stateful widget for the DonorListScreen
 class DonorListScreen extends StatefulWidget {
   final String bloodGroup;
   final String mobileNo;
@@ -32,15 +33,17 @@ class _DonorListScreenState extends State<DonorListScreen> {
   double? latitude;
   double? longitude;
 
+// Distance options for the user to choose from
   final Map<String, String> distanceOptions = {
     '5kms': '5kms',
     '10kms': '10kms',
   };
 
+ // Get the label for the currently selected distance
   String getSelectedLabel() {
     return distanceOptions[selectedDistance] ?? '';
   }
-
+// Set the selected distance based on the label
   void setSelectedValue(String label) {
     final matchingEntry = distanceOptions.entries.firstWhere(
       (entry) => entry.value == label,
@@ -48,15 +51,15 @@ class _DonorListScreenState extends State<DonorListScreen> {
     );
     selectedDistance = matchingEntry.key;
   }
-
+ // Initialize the state
   @override
   void initState() {
     super.initState();
     requestLocationPermissionAndGetCurrentLocation();
-    getCurrentLocation();
+    // getCurrentLocation();
     print(widget.bloodGroup);
   }
-
+ // Calculate the distance between two geographical points using Haversine formula
   double calculateDistance(
       double? lat1, double? lon1, double? lat2, double? lon2) {
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
@@ -79,10 +82,12 @@ class _DonorListScreenState extends State<DonorListScreen> {
     return distance; // Distance in kilometers
   }
 
+ // Convert degrees to radians
   double _radians(double degrees) {
     return degrees * pi / 180;
   }
 
+ // Request location permission and get the current location
   Future<void> requestLocationPermissionAndGetCurrentLocation() async {
     final status = await Permission.location.request();
     if (status.isGranted) {
@@ -105,6 +110,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
     }
   }
 
+// Get the current location using the Geolocator package
   Future<Position?> getCurrentLocation() async {
     try {
       final position = await Geolocator.getCurrentPosition(
@@ -117,6 +123,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
     }
   }
 
+ // Fetch donor data from the API based on the selected distance
   Future<List<Map<String, dynamic>>> fetchData(double selectedDistance) async {
     final url = base_url + 'donor_list1';
     final body = {
@@ -197,6 +204,8 @@ class _DonorListScreenState extends State<DonorListScreen> {
     }
   }
 
+   // Launch a phone call using the FlutterPhoneDirectCaller package
+
   void _launchPhoneCall(String? phoneNumber) async {
     if (phoneNumber != null) {
       try {
@@ -220,7 +229,7 @@ class _DonorListScreenState extends State<DonorListScreen> {
       }
     }
   }
-
+// Build the detailed card details as a string for sharing
   String buildCardDetails(Map<String, dynamic> item) {
     final itemName = item['name'] as String?;
     final itemBloodGroup = item['blood_group'] as String?;
@@ -244,16 +253,22 @@ class _DonorListScreenState extends State<DonorListScreen> {
 
     return cardDetails;
   }
-
+  // Share the detailed card details
   void _shareCardDetails(String cardDetails) {
     Share.share(cardDetails);
   }
-
+  
+// Build the UI for the DonorListScreen
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Donors List'),
+          title: const Text('Donors List',
+           style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
+          backgroundColor: Colors.blue,
           actions: <Widget>[
             InkWell(
               onTap: () {

@@ -1,3 +1,4 @@
+// Import necessary packages and files
 import 'package:blood_donation/screens/admin_register.dart';
 import 'package:blood_donation/screens/base_url.dart';
 import 'package:blood_donation/screens/login.dart';
@@ -5,26 +6,30 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+// UsersList widget for displaying a list of users with admin functionalities
 class UsersList extends StatefulWidget {
-  final String role;
+  final String role; // Role of the user, e.g., 'admin'
   UsersList({Key? key, required this.role}) : super(key: key);
 
   @override
   State<UsersList> createState() => _UsersListState();
 }
 
+// _UsersListState manages the state for the UsersList widget
 class _UsersListState extends State<UsersList> {
-  List<dynamic> data = [];
-  List<dynamic> filteredData = [];
-  TextEditingController searchController = TextEditingController();
-  bool isLoading = true;
+  List<dynamic> data = []; // List to store user data
+  List<dynamic> filteredData = []; // List to store filtered user data
+  TextEditingController searchController =
+      TextEditingController(); // Controller for the search bar
+  bool isLoading = true; // Flag to indicate whether data is still loading
 
   @override
   void initState() {
     super.initState();
-    getAllUsers();
+    getAllUsers(); // Fetch user data when the widget is initialized
   }
 
+  // Fetch all users from the server
   Future<void> getAllUsers() async {
     try {
       final String url = base_url + 'getusers';
@@ -36,7 +41,6 @@ class _UsersListState extends State<UsersList> {
 
       if (res.statusCode == 200) {
         final fetchedData = jsonDecode(res.body);
-        print('API Response: $fetchedData');
 
         if (fetchedData is List) {
           setState(() {
@@ -64,15 +68,16 @@ class _UsersListState extends State<UsersList> {
     }
   }
 
+  // Filter users based on search query
   void filterUsers(String query) {
     setState(() {
       filteredData = data
-          .where((station) =>
-              station['mobile_no']
+          .where((user) =>
+              user['mobile_no']
                   .toString()
                   .toLowerCase()
                   .contains(query.toLowerCase()) ||
-              station['name']
+              user['name']
                   .toString()
                   .toLowerCase()
                   .contains(query.toLowerCase()))
@@ -80,6 +85,7 @@ class _UsersListState extends State<UsersList> {
     });
   }
 
+  // Delete a user item after confirmation
   Future<void> deleteItem(
       Map<String, dynamic> userData, BuildContext context) async {
     bool confirmDelete = await showDeleteConfirmationDialog(context);
@@ -88,16 +94,14 @@ class _UsersListState extends State<UsersList> {
       try {
         final String url = base_url + 'deleteUser';
 
-      final response = await http.post(
-  Uri.parse(url),
-  headers: {'Content-Type': 'application/json'},
-  body: jsonEncode({'mobile': userData['mobile_no']}),  // Pass only the user ID
-);
-
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(
+              {'mobile': userData['mobile_no']}), // Pass only the user ID
+        );
 
         if (response.statusCode == 200) {
-          print('Data with ID ${userData['id']} deleted successfully');
-
           // Show a Snackbar to inform the user about the successful deletion.
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -111,12 +115,12 @@ class _UsersListState extends State<UsersList> {
             filteredData.clear();
           });
 
-  // Fetch new data
-        getAllUsers();
-        // Close the keyboard
-        FocusScope.of(context).unfocus();
-        // Clear the search bar data
-        searchController.clear();
+          // Fetch new data
+          getAllUsers();
+          // Close the keyboard
+          FocusScope.of(context).unfocus();
+          // Clear the search bar data
+          searchController.clear();
         } else {
           print('Failed to delete data with ID ${userData['id']}');
           // Handle the error case or show an error message to the user.
@@ -133,13 +137,14 @@ class _UsersListState extends State<UsersList> {
     }
   }
 
+  // Show a confirmation dialog before deleting a user
   Future<bool> showDeleteConfirmationDialog(BuildContext context) async {
     bool? result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text('Confirm Deletion'),
-          content: Text('Are you sure you want to delete the data?'),
+          content: Text('Are you sure you want to delete the user?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -166,8 +171,13 @@ class _UsersListState extends State<UsersList> {
     final Size screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Users'),
+        title: Text('Users',
+         style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
         actions: <Widget>[
+          // Logout button in the app bar
           InkWell(
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -201,6 +211,7 @@ class _UsersListState extends State<UsersList> {
       body: Column(
         children: [
           SizedBox(height: screenSize.height * 0.02),
+          // Search bar for filtering users
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -215,6 +226,7 @@ class _UsersListState extends State<UsersList> {
               ),
             ),
           ),
+          // Display user list
           isLoading
               ? Center(child: CircularProgressIndicator())
               : Expanded(
@@ -225,10 +237,12 @@ class _UsersListState extends State<UsersList> {
                         children: [
                           ListTile(
                             title: Text(filteredData[index]['name'].toString()),
-                            subtitle: Text(filteredData[index]['mobile_no'].toString()),
+                            subtitle: Text(
+                                filteredData[index]['mobile_no'].toString()),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                // Delete button for each user
                                 IconButton(
                                   icon: Icon(
                                     Icons.delete,
@@ -256,32 +270,31 @@ class _UsersListState extends State<UsersList> {
                 ),
         ],
       ),
- floatingActionButton: Column(
-  mainAxisSize: MainAxisSize.min,
-  children: <Widget>[
-    FloatingActionButton(
-      mini: true,
-      onPressed: () async {
-        // Navigate to the AdminRegister screen
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminRegister(role: widget.role),
+      // Floating Action Button for adding a new user
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          FloatingActionButton(
+            mini: true,
+            onPressed: () async {
+              // Navigate to the AdminRegister screen
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AdminRegister(role: widget.role),
+                ),
+              );
+            },
+            child: Icon(Icons.add),
+            tooltip: 'Add',
           ),
-        );
-      },
-      child: Icon(Icons.add),
-      tooltip: 'Add',
-    ),
-    SizedBox(height: 6),
-    Text(
-      'Add',
-      style: TextStyle(fontSize: 13.0, fontWeight: FontWeight.bold),
-    ),
-  ],
-),
-
-
+          SizedBox(height: 6),
+          Text(
+            'Add',
+            style: TextStyle(fontSize: 13.0, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }

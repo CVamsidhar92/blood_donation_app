@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
+// Define a stateful widget for the registration screen
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
 
@@ -13,9 +14,12 @@ class Register extends StatefulWidget {
   _RegisterState createState() => _RegisterState();
 }
 
+// Define the state for the registration screen
 class _RegisterState extends State<Register> {
+    // Key to uniquely identify the Form widget
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  // Declare variables to store user input data
   String name = '';
   String selectedBloodGroup = '';
   String designation = '';
@@ -44,6 +48,7 @@ class _RegisterState extends State<Register> {
   String confirmPassword = '';
   bool _passwordObscureText = true;
 
+  // List of blood groups
   List<String> bloodGroups = [
     'A+',
     'A-',
@@ -54,26 +59,29 @@ class _RegisterState extends State<Register> {
     'O+',
     'O-',
   ];
+
+    // Controllers for latitude and longitude text fields
   TextEditingController officeLatitudeController = TextEditingController();
   TextEditingController officeLongitudeController = TextEditingController();
   TextEditingController residentialLatitudeController = TextEditingController();
-  TextEditingController residentialLongitudeController =
-      TextEditingController();
+  TextEditingController residentialLongitudeController = TextEditingController();
   String otp = '';
 
   // Function to fetch latitude and longitude from address
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
     final apiKey =
-        'API_KEY'; // Replace with your API key
+        'AIzaSyAC2MG5XPZdHjahoQCi8mZawbB3VHbrfC0'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
         'https://maps.googleapis.com/maps/api/geocode/json?address=$encodedAddress&key=$apiKey';
-
+    
+    // Make a request to the Geocoding API
     final response = await http.get(Uri.parse(url));
-
+    // Process the API response
     if (response.statusCode == 200) {
+    // Parse the response to extract latitude and longitude
       final data = json.decode(response.body);
       final results = data['results'][0];
       final location = results['geometry']['location'];
@@ -84,13 +92,15 @@ class _RegisterState extends State<Register> {
       return {'latitude': lat, 'longitude': lng};
     } else {
       print('Failed to fetch coordinates for $fullAddress');
+    // Handle the case where fetching coordinates fails
       throw Exception('Failed to fetch coordinates');
     }
   }
 
-  // Call this function to get latitude and longitude for both addresses
+  // Function to get latitude and longitude for office address
   Future<void> getAddressCoordinates() async {
     try {
+  // Call the Geocoding API function for the office address
       var officeLatLng = await getLatLngFromAddress(
         officeStreet,
         officeArea,
@@ -101,11 +111,12 @@ class _RegisterState extends State<Register> {
       print('Office Latitude: ${officeLatLng['latitude']}');
       print('Office Longitude: ${officeLatLng['longitude']}');
 
-      // Set the text controllers after coordinates have been fetched
+      // Update the state with the fetched coordinates
       setState(() {
         officeLatitude = officeLatLng['latitude'] as double;
         officeLongitude = officeLatLng['longitude'] as double;
       });
+     // Update the text controllers for latitude and longitude
       setState(() {
         // After setting the values in the state, you can update the controllers
         officeLatitudeController.text = officeLatitude.toString();
@@ -117,9 +128,11 @@ class _RegisterState extends State<Register> {
     }
   }
 
-  // Call this function to get latitude and longitude for both addresses
+  // Function to get latitude and longitude for residential address
   Future<void> getAddressCoordinates1() async {
     try {
+            // Call the Geocoding API function for the residential address
+
       var residentialLatLng = await getLatLngFromAddress(
         street1,
         area1,
@@ -130,27 +143,29 @@ class _RegisterState extends State<Register> {
       print('Residential Latitude: ${residentialLatLng['latitude']}');
       print('Residential Longitude: ${residentialLatLng['longitude']}');
 
-      // Set the text controllers after coordinates have been fetched
+      // Update the state with the fetched coordinates
       setState(() {
         residentialLatitude = residentialLatLng['latitude'] as double;
         residentialLongitude = residentialLatLng['longitude'] as double;
       });
+            // Update the text controllers for latitude and longitude
       setState(() {
         residentialLatitudeController.text = residentialLatitude.toString();
         residentialLongitudeController.text = residentialLongitude.toString();
       });
     } catch (e) {
-      // Handle error
+           // Handle error if fetching coordinates fails
       print('Error fetching coordinates: $e');
     }
   }
 
-  // Call API Start
+  // Function to handle the registration process
   void registerDonor() async {
-    // Call the function to fetch latitude and longitude
+    // Call functions to fetch latitude and longitude for both addresses
    await getAddressCoordinates();
   await getAddressCoordinates1();
 
+    // Validate the form using the form key
     if (!_formKey.currentState!.validate()) {
       // Form validation failed, do not proceed with the API call
       return;
@@ -161,6 +176,7 @@ class _RegisterState extends State<Register> {
         officeLongitude != null &&
         residentialLatitude != null &&
         residentialLongitude != null)) {
+                // Display an error message if coordinates are null
     ScaffoldMessenger.of(context).showSnackBar(
   SnackBar(
     content: Text('Ensure the address entered is accurate.'),
@@ -169,10 +185,11 @@ class _RegisterState extends State<Register> {
 );
       return;
     }
-
+    // Check if the user already exists based on mobile number
     bool isUserExists = await checkUserExistence();
 
     if (isUserExists) {
+            // Display a message if the user already exists
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Mobile number is already registered, Please Login.'),
@@ -180,8 +197,7 @@ class _RegisterState extends State<Register> {
       );
       return;
     }
-    // Rest of your code for API call goes here...
-    // Create a map to hold the form data
+    // map to hold the form data
     Map<String, dynamic> formData = {
       'name': name,
       'bloodGroup': selectedBloodGroup,
@@ -260,14 +276,16 @@ class _RegisterState extends State<Register> {
     }
   }
 
-  // API Call End
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text('Blood Donor Registration'),
+        backgroundColor: Colors.blue,
+        title: const Text('Blood Donor Registration', style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -331,7 +349,6 @@ class _RegisterState extends State<Register> {
                             selectedBloodGroup = suggestion!;
                           });
                         },
-                        // enabled:areInputFieldsEnabled,
 
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -353,7 +370,6 @@ class _RegisterState extends State<Register> {
                   decoration: InputDecoration(
                     labelText: 'Name*',
                   ),
-                  // enabled: areInputFieldsEnabled,
                   validator: (value) {
                     if (name.isEmpty) {
                       return 'Name is required';
@@ -371,7 +387,6 @@ class _RegisterState extends State<Register> {
                   decoration: InputDecoration(
                     labelText: 'Designation*',
                   ),
-                  // enabled: areInputFieldsEnabled,
                   validator: (value) {
                     if (designation.isEmpty) {
                       return 'Designation is required';
@@ -420,7 +435,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officeStreet.isEmpty) {
                                   return 'Street/Road is required';
@@ -470,7 +484,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'City*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officeCity.isEmpty) {
                                   return 'City is required';
@@ -493,7 +506,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'District*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officeDistrict.isEmpty) {
                                   return 'District is required';
@@ -520,7 +532,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'State*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officeState.isEmpty) {
                                   return 'State is required';
@@ -546,7 +557,6 @@ class _RegisterState extends State<Register> {
                               inputFormatters: [
                                 LengthLimitingTextInputFormatter(6)
                               ],
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (officePincode.isEmpty) {
                                   return 'Pincode is required';
@@ -615,7 +625,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'Street/Road*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (street1.isEmpty) {
                                   return 'Street/Road is required';
@@ -638,7 +647,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'Area/Locality*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (area1.isEmpty) {
                                   return 'Area/Locality is required';
@@ -665,7 +673,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'City*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (city1.isEmpty) {
                                   return 'City is required';
@@ -688,7 +695,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'District*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (district1.isEmpty) {
                                   return 'District is required';
@@ -715,7 +721,6 @@ class _RegisterState extends State<Register> {
                               decoration: InputDecoration(
                                 labelText: 'State*',
                               ),
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (state1.isEmpty) {
                                   return 'State is required';
@@ -741,7 +746,6 @@ class _RegisterState extends State<Register> {
                               inputFormatters: [
                                 LengthLimitingTextInputFormatter(6)
                               ],
-                              //  enabled: areInputFieldsEnabled,
                               validator: (value) {
                                 if (pincode1.isEmpty) {
                                   return 'Pincode is required';
@@ -782,7 +786,6 @@ class _RegisterState extends State<Register> {
                     labelText: 'Mobile Number*',
                   ),
                   inputFormatters: [LengthLimitingTextInputFormatter(10)],
-                  //  enabled: areInputFieldsEnabled,
                   validator: (value) {
                     if (mobileNumber.isEmpty) {
                       return 'Mobile Number is required';
@@ -843,10 +846,15 @@ class _RegisterState extends State<Register> {
                   },
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: registerDonor,
-                  child: const Text('Register'),
-                )
+            ElevatedButton(
+  onPressed: registerDonor,
+  style: ElevatedButton.styleFrom(
+    primary: Colors.blue, // Set background color to blue
+    onPrimary: Colors.white, // Set text color to white
+  ),
+  child: const Text('Register'),
+)
+
               ],
             ),
           ),

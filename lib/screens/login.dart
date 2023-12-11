@@ -8,22 +8,23 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 
+// Define a stateful widget for the login screen
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
 
   @override
   _LoginState createState() => _LoginState();
 }
-
+// Define the state for the login screen
 class _LoginState extends State<Login> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordObscureText = true;
   bool _rememberMe = false;
-  String name = '';
   int? _count;
   int? _cachedLoginCount;
   Future<int>? _loginCountFuture;
+
   @override
   void initState() {
     super.initState();
@@ -32,9 +33,9 @@ class _LoginState extends State<Login> {
     _loginCountFuture = fetchLoginCount();
   }
 
+  // Check if the user is already logged in using shared preferences
   Future<void> checkIfUserIsLoggedIn() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     final bool rememberMe = prefs.getBool('rememberMe') ?? false;
 
     if (rememberMe) {
@@ -49,6 +50,7 @@ class _LoginState extends State<Login> {
     }
   }
 
+  // Navigate to the home page with user details
   void navigateToHomePage(String mobileNo, String role) {
     Navigator.pushReplacement(
       context,
@@ -58,6 +60,7 @@ class _LoginState extends State<Login> {
     );
   }
 
+  // Handle the login process
   Future<void> _login() async {
     final mobileNo = _mobileController.text;
     final password = _passwordController.text;
@@ -71,6 +74,7 @@ class _LoginState extends State<Login> {
       return;
     }
 
+    // Send a login request to the server
     final response = await http.post(
       Uri.parse(base_url + 'Login'),
       headers: {'Content-Type': 'application/json'},
@@ -82,18 +86,20 @@ class _LoginState extends State<Login> {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
-      final String name = responseData['name'].toString();
       final String mobileNo = responseData['mobile_no'].toString();
       final String role = responseData['role'].toString();
 
+      // Navigate to the home page with user details
       navigateToHomePage(mobileNo, role);
 
+      // Save user details in shared preferences if 'Remember Me' is checked
       if (_rememberMe) {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setString('userMobileNo', mobileNo);
         prefs.setString('userPassword', password);
         prefs.setBool('rememberUser', true);
       } else {
+        // Clear user details from shared preferences
         final SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.remove('userMobileNo');
         prefs.remove('userPassword');
@@ -102,10 +108,11 @@ class _LoginState extends State<Login> {
         _passwordController.text = '';
       }
     } else {
-      _showErrorSnackBar('The login credentials are wrong.Please check.');
+      _showErrorSnackBar('The login credentials are wrong. Please check.');
     }
   }
 
+  // Show a snackbar with an error message
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -115,6 +122,7 @@ class _LoginState extends State<Login> {
     );
   }
 
+  // Fetch the login count from the server
   Future<int> fetchLoginCount() async {
     // If the count is already cached, return it
     if (_cachedLoginCount != null) {
@@ -151,14 +159,18 @@ class _LoginState extends State<Login> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: Text('Login', style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
         automaticallyImplyLeading: false,
+        backgroundColor: Colors.blue,
         actions: <Widget>[
           InkWell(
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) =>
-                    Admin(), // Replace with the actual login screen widget
+                    Admin(), //Navigate to Admin Screen
               ));
             },
             child: Row(
@@ -341,7 +353,6 @@ class _LoginState extends State<Login> {
               SizedBox(
                 height: 20,
               ),
-              // Usage of FutureBuilder with caching
               // Usage of FutureBuilder with caching
               FutureBuilder<int>(
                 future: _loginCountFuture,

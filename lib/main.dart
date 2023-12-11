@@ -18,11 +18,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      // Set the initial route to the Splash screen
       initialRoute: '/splash',
+      // Define named routes for navigation
       routes: {
-        '/splash': (context) => Splash(),
-        '/Login': (context) => Login(),
-         '/Register': (context) => Register(),
+        '/splash': (context) => Splash(), // Route for the Splash screen
+        '/Login': (context) => Login(),   // Route for the Login screen
+        '/Register': (context) => Register(), // Route for the Register screen
       },
     );
   }

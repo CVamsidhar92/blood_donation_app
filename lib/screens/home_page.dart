@@ -11,23 +11,31 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
+// Define the home page widget
+// ignore: must_be_immutable
 class HomePage extends StatefulWidget {
+  // Declare variables for user mobile number and role
   String mobileNo;
   String role;
+
+  // Constructor to initialize the variables
   HomePage({Key? key, required this.mobileNo, required this.role})
       : super(key: key);
 
+  // Create the state for the home page
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
+// Define the state for the home page
 class _HomePageState extends State<HomePage> {
+  // Declare variables and keys
   final myVersion = '1.2';
   late BuildContext dialogContext;
-  late String selectedBloodGroup = 'A+';
+  late String selectedBloodGroup = '';
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // List of blood groups
   List<String> bloodGroups = [
     '-Select-',
     'A+',
@@ -40,6 +48,7 @@ class _HomePageState extends State<HomePage> {
     'O-',
   ];
 
+  // Initialize the state
   @override
   void initState() {
     super.initState();
@@ -48,19 +57,27 @@ class _HomePageState extends State<HomePage> {
     print(widget.role);
   }
 
+  // Function to check for app updates
   Future<void> getUpdates() async {
     try {
+      // Prepare data for the update check
       final data = {'name': myVersion};
 
+      // Define the URL for the update check
       final String url = base_url + 'appversionupdate';
+
+      // Send a POST request to check for updates
       final response = await http.post(
         Uri.parse(url),
         headers: {"Content-Type": "application/json"},
         body: json.encode(data),
       );
+
+      // Decode the response
       final result1 = json.decode(response.body);
       print(result1);
 
+      // Check if an update is available
       if (myVersion != result1[0]['appversion']) {
         showDialog(
           context: context,
@@ -75,6 +92,8 @@ class _HomePageState extends State<HomePage> {
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(dialogContext);
+
+                    // Launch the update URL
                     String url = (result1[0]['update_url']);
                     try {
                       await launch(url);
@@ -90,11 +109,10 @@ class _HomePageState extends State<HomePage> {
           },
         );
       } else {
-        // Uncomment the below line if you have implemented AsyncStorage in your app
-        // await AsyncStorage.setItem('forceUpdateAlertShown', 'false');
         print('No update available.');
       }
     } catch (error) {
+      // Handle errors during update check
       print("Error: $error");
       showDialog(
         context: context,
@@ -115,13 +133,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Build the UI for the home page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Blood Donation App'),
+        title: const Text('Blood Donation App',
+         style: TextStyle(
+      fontWeight: FontWeight.bold, // Set text to bold
+      color: Colors.white, // Set text color to white
+    ),),
+        backgroundColor: Colors.blue,
         automaticallyImplyLeading: false,
         actions: <Widget>[
+          // Logout button
           InkWell(
             onTap: () {
               Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -158,6 +183,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Logo images
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -186,6 +212,8 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // App title and subtitle
             const Text(
               'BLOOD DONOR FINDER',
               style: TextStyle(
@@ -205,9 +233,10 @@ class _HomePageState extends State<HomePage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
+
+            // Blood group selection dropdown
             FractionallySizedBox(
-              widthFactor:
-                  0.8, // Adjust the width factor according to your needs
+              widthFactor: 0.8,
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -264,12 +293,15 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Find a Donor button
             SizedBox(
               height: 45,
               child: FractionallySizedBox(
                 widthFactor: 0.5,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Validate blood group selection
                     if (selectedBloodGroup == '-Select-') {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -303,12 +335,14 @@ class _HomePageState extends State<HomePage> {
                   ),
                   child: const Text(
                     'Find A Donor',
-                    style: TextStyle(fontSize: 20),
+                    style: TextStyle(fontSize: 20, color: Colors.white),
                   ),
                 ),
               ),
             ),
             SizedBox(height: 10),
+
+            // Edit Profile button (visible for authenticated users)
             if (widget.role != '0')
               SizedBox(
                 height: 45,
@@ -329,11 +363,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Text(
                           'Edit Profile',
-                          style: TextStyle(fontSize: 20),
+                          style: TextStyle(fontSize: 20, color: Colors.white),
                         ))),
               ),
 
-               if (widget.role == '0')
+            // Add User button (visible for admin users)
+            if (widget.role == '0')
               SizedBox(
                 height: 45,
                 child: FractionallySizedBox(
@@ -343,7 +378,8 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => UsersList(role:widget.role)));
+                                  builder: (context) => UsersList(
+                                      role: widget.role)));
                         },
                         style: ButtonStyle(
                           backgroundColor: MaterialStateProperty.all<Color>(
@@ -354,7 +390,10 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(fontSize: 20),
                         ))),
               ),
+
             const SizedBox(height: 80),
+
+            // App tagline
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -364,8 +403,8 @@ class _HomePageState extends State<HomePage> {
 
                   child: RichText(
                     text: const TextSpan(
-                      style:
-                          TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
                       children: [
                         TextSpan(
                           text: 'B',
@@ -387,8 +426,8 @@ class _HomePageState extends State<HomePage> {
                       left: 100.0), // Adjust the left padding value as desired
                   child: RichText(
                     text: const TextSpan(
-                      style:
-                          TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
                       children: [
                         TextSpan(
                           text: 'L',
@@ -410,8 +449,8 @@ class _HomePageState extends State<HomePage> {
                       left: 100.0), // Adjust the left padding value as desired
                   child: RichText(
                     text: const TextSpan(
-                      style:
-                          TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
                       children: [
                         TextSpan(
                           text: 'O',
