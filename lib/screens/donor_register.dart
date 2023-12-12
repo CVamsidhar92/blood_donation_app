@@ -71,7 +71,7 @@ class _RegisterState extends State<Register> {
   Future<Map<String, double>> getLatLngFromAddress(
       String street, String area, String city, String state) async {
     final apiKey =
-        'AIzaSyAC2MG5XPZdHjahoQCi8mZawbB3VHbrfC0'; // Replace with your API key
+        'API_KEY'; // Replace with your API key
     final fullAddress = '$street, $area, $city, $state';
     final encodedAddress = Uri.encodeFull(fullAddress);
     final url =
